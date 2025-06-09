@@ -136,6 +136,14 @@ class GenUtils:
         return table_name.split('_')[-1]
 
     @classmethod
+    def get_abbreviation(cls, table_name: str) -> str:
+        """根据表名生成缩写，取每个单词的首字母"""
+        if not table_name:
+            return ''
+        parts = re.split(r'[_\s]+', table_name)
+        return ''.join(p[0].lower() for p in parts if p)
+
+    @classmethod
     def convert_class_name(cls, table_name: str) -> str:
         """
         表名转换成Python类名

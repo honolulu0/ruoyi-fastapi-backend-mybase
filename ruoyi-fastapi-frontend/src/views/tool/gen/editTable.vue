@@ -192,6 +192,14 @@ const columns = ref([]);
 const dictOptions = ref([]);
 const info = ref({});
 
+function getTableAbbr(name) {
+  return name
+    .split(/[_\s]+/)
+    .filter(Boolean)
+    .map(p => p.charAt(0).toLowerCase())
+    .join('');
+}
+
 function appendRelationFields(tableName, fields) {
   const existKeys = new Set(columns.value.map(c => `${c.tableName || ''}-${c.columnName}`));
   fields.forEach(col => {
@@ -201,7 +209,7 @@ function appendRelationFields(tableName, fields) {
       ...col,
       columnId: `rel_${Date.now()}_${Math.random()}`,
       tableName,
-      columnAlias: `${tableName}_${col.columnName}`,
+      columnAlias: `${getTableAbbr(tableName)}_${col.columnName}`,
       relationTable: '',
       relationColumn: '',
       relationType: ''
@@ -274,7 +282,7 @@ function close() {
       columns.value.forEach(col => {
         col.tableName = info.value.tableName;
         if (!col.columnAlias && col.columnName) {
-          col.columnAlias = `${col.tableName}_${col.columnName}`;
+          col.columnAlias = `${getTableAbbr(col.tableName)}_${col.columnName}`;
         }
         if (col.relationTable) {
           loadRelationColumns(col);

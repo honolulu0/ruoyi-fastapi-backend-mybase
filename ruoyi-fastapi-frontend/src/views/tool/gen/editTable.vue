@@ -239,7 +239,11 @@ function submitForm() {
     const validateResult = res.every(item => !!item);
     if (validateResult) {
       const genTable = Object.assign({}, info.value);
-      genTable.columns = columns.value;
+      genTable.columns = columns.value.map(col => {
+        const c = { ...col };
+        if (!Number.isInteger(c.columnId)) delete c.columnId;
+        return c;
+      });
       genTable.params = {
         treeCode: info.value.treeCode,
         treeName: info.value.treeName,

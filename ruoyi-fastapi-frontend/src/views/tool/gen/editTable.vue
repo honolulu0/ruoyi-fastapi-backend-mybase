@@ -182,6 +182,22 @@ const columns = ref([]);
 const dictOptions = ref([]);
 const info = ref({});
 
+function appendRelationFields(tableName, fields) {
+  const existKeys = new Set(columns.value.map(c => `${c.tableName || ''}-${c.columnName}`));
+  fields.forEach(col => {
+    const key = `${tableName}-${col.columnName}`;
+    if (existKeys.has(key)) return;
+    columns.value.push({
+      ...col,
+      columnId: `rel_${Date.now()}_${Math.random()}`,
+      tableName,
+      relationTable: '',
+      relationColumn: '',
+      relationType: ''
+    });
+  });
+}
+
 function loadRelationColumns(row) {
   if (!row.relationTable) {
     row.relationOptions = [];
@@ -190,7 +206,9 @@ function loadRelationColumns(row) {
   }
   row.relationColumn = '';
   listDbTableColumns(row.relationTable).then(res => {
-    row.relationOptions = res.rows || (res.data && res.data.rows) || [];
+    const fields = res.rows || (res.data && res.data.rows) || [];
+    row.relationOptions = fields;
+    appendRelationFields(row.relationTable, fields);
   });
 }
 
@@ -243,6 +261,7 @@ function close() {
       info.value = res.data.info;
       tables.value = res.data.tables;
       columns.value.forEach(col => {
+        col.tableName = info.value.tableName;
         if (col.relationTable) {
           loadRelationColumns(col);
         }

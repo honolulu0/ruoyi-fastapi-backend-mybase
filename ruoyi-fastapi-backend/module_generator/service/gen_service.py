@@ -128,9 +128,16 @@ class GenTableService:
                 for gen_table_column in page_object.columns:
                     gen_table_column.update_by = page_object.update_by
                     gen_table_column.update_time = datetime.now()
-                    await GenTableColumnDao.edit_gen_table_column_dao(
-                        query_db, gen_table_column.model_dump(by_alias=True)
-                    )
+                    if gen_table_column.column_id is None:
+                        gen_table_column.create_by = page_object.update_by
+                        gen_table_column.create_time = datetime.now()
+                        await GenTableColumnDao.add_gen_table_column_dao(
+                            query_db, gen_table_column
+                        )
+                    else:
+                        await GenTableColumnDao.edit_gen_table_column_dao(
+                            query_db, gen_table_column.model_dump(by_alias=True)
+                        )
                 await query_db.commit()
                 return CrudResponseModel(is_success=True, message='更新成功')
             except Exception as e:

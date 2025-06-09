@@ -1,5 +1,7 @@
 from config.database import async_engine, AsyncSessionLocal, Base
 from utils.log_util import logger
+from sqlalchemy import text
+from config.env import DataBaseConfig
 
 
 async def get_db():
@@ -21,4 +23,38 @@ async def init_create_table():
     logger.info('初始化数据库连接...')
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+        async def add_column_if_not_exists(table: str, column: str, column_def: str):
+            """在表中添加缺失字段"""
+            if DataBaseConfig.db_type == 'postgresql':
+                await conn.execute(
+                    text(
+                        f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {column} {column_def}"
+                    )
+                )
+            else:
+                result = await conn.execute(
+                    text(
+                        "SELECT COUNT(*) FROM information_schema.columns "
+                        "WHERE table_schema=:schema AND table_name=:table AND column_name=:column"
+                    ),
+                    {
+                        "schema": DataBaseConfig.db_database,
+                        "table": table,
+                        "column": column,
+                    },
+                )
+                if result.scalar() == 0:
+                    await conn.execute(
+                        text(
+                            f"ALTER TABLE {table} ADD COLUMN {column} {column_def}"
+                        )
+                    )
+
+        await add_column_if_not_exists(
+            "gen_table_column", "relation_table", "varchar(200) default ''"
+        )
+        await add_column_if_not_exists(
+            "gen_table_column", "relation_column", "varchar(200) default ''"
+        )
     logger.info('数据库连接成功')

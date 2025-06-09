@@ -928,6 +928,7 @@ create table gen_table_column (
     dict_type varchar(200) default '',
     relation_table varchar(200) default '',
     relation_column varchar(200) default '',
+    relation_type varchar(50) default '',
     sort int4,
     create_by varchar(64) default '',
     create_time timestamp(0),
@@ -955,6 +956,7 @@ comment on column gen_table_column.html_type is '显示类型（文本框、文�
 comment on column gen_table_column.dict_type is '字典类型';
 comment on column gen_table_column.relation_table is '关联表名';
 comment on column gen_table_column.relation_column is '关联列名';
+comment on column gen_table_column.relation_type is '关联关系';
 comment on column gen_table_column.sort is '排序';
 comment on column gen_table_column.create_by is '创建者';
 comment on column gen_table_column.create_time is '创建时间';

@@ -67,6 +67,7 @@ class GenTableColumn(Base):
     dict_type = Column(String(200), nullable=True, default='', comment='字典类型')
     relation_table = Column(String(200), nullable=True, default='', comment='关联表名')
     relation_column = Column(String(200), nullable=True, default='', comment='关联列名')
+    relation_type = Column(String(50), nullable=True, default='', comment='关联关系')
     sort = Column(Integer, nullable=True, comment='排序')
     create_by = Column(String(64), default='', comment='创建者')
     create_time = Column(DateTime, nullable=True, default=datetime.now(), comment='创建时间')

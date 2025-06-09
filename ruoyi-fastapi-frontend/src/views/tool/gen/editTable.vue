@@ -142,6 +142,15 @@
               </el-select>
             </template>
           </el-table-column>
+          <el-table-column label="关联关系" min-width="8%">
+            <template #default="scope">
+              <el-select v-model="scope.row.relationType" placeholder="请选择">
+                <el-option label="LEFT" value="LEFT" />
+                <el-option label="INNER" value="INNER" />
+                <el-option label="RIGHT" value="RIGHT" />
+              </el-select>
+            </template>
+          </el-table-column>
         </el-table>
       </el-tab-pane>
       <el-tab-pane label="生成信息" name="genInfo">
@@ -179,8 +188,9 @@ function loadRelationColumns(row) {
     row.relationColumn = '';
     return;
   }
+  row.relationColumn = '';
   listDbTableColumns(row.relationTable).then(res => {
-    row.relationOptions = res.rows;
+    row.relationOptions = res.rows || (res.data && res.data.rows) || [];
   });
 }
 

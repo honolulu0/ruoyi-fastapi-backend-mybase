@@ -706,6 +706,7 @@ create table gen_table_column (
   dict_type         varchar(200)    default ''                 comment '字典类型',
   relation_table    varchar(200)    default ''                 comment '关联表名',
   relation_column   varchar(200)    default ''                 comment '关联列名',
+  relation_type     varchar(50)     default ''                 comment '关联关系',
   sort              int                                        comment '排序',
   create_by         varchar(64)     default ''                 comment '创建者',
   create_time 	    datetime                                   comment '创建时间',

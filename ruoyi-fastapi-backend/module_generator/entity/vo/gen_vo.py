@@ -184,6 +184,7 @@ class GenTableColumnBaseModel(BaseModel):
     dict_type: Optional[str] = Field(default=None, description='字典类型')
     relation_table: Optional[str] = Field(default=None, description='关联表名')
     relation_column: Optional[str] = Field(default=None, description='关联列名')
+    relation_type: Optional[str] = Field(default=None, description='关联关系')
     sort: Optional[int] = Field(default=None, description='排序')
     create_by: Optional[str] = Field(default=None, description='创建者')
     create_time: Optional[datetime] = Field(default=None, description='创建时间')

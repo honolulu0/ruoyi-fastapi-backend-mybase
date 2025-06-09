@@ -115,7 +115,30 @@
                   :value="dict.dictType">
                   <span style="float: left">{{ dict.dictName }}</span>
                   <span style="float: right; color: #8492a6; font-size: 13px">{{ dict.dictType }}</span>
-              </el-option>
+                </el-option>
+              </el-select>
+            </template>
+          </el-table-column>
+          <el-table-column label="关联表" min-width="10%">
+            <template #default="scope">
+              <el-select v-model="scope.row.relationTable" @change="val => loadRelationColumns(scope.row)">
+                <el-option
+                  v-for="(table, index) in tables"
+                  :key="index"
+                  :label="table.tableName"
+                  :value="table.tableName"
+                />
+              </el-select>
+            </template>
+          </el-table-column>
+          <el-table-column label="关联字段" min-width="10%">
+            <template #default="scope">
+              <el-select v-model="scope.row.relationColumn">
+                <el-option
+                  v-for="col in scope.row.relationOptions || []"
+                  :key="col.columnName"
+                  :label="col.columnName + '：' + col.columnComment"
+                  :value="col.columnName" />
               </el-select>
             </template>
           </el-table-column>
@@ -135,7 +158,7 @@
 </template>
 
 <script setup name="GenEdit">
-import { getGenTable, updateGenTable } from "@/api/tool/gen";
+import { getGenTable, updateGenTable, listDbTableColumns } from "@/api/tool/gen";
 import { optionselect as getDictOptionselect } from "@/api/system/dict/type";
 import basicInfoForm from "./basicInfoForm";
 import genInfoForm from "./genInfoForm";
@@ -149,6 +172,17 @@ const tables = ref([]);
 const columns = ref([]);
 const dictOptions = ref([]);
 const info = ref({});
+
+function loadRelationColumns(row) {
+  if (!row.relationTable) {
+    row.relationOptions = [];
+    row.relationColumn = '';
+    return;
+  }
+  listDbTableColumns(row.relationTable).then(res => {
+    row.relationOptions = res.rows;
+  });
+}
 
 /** 提交按钮 */
 function submitForm() {
@@ -198,6 +232,11 @@ function close() {
       columns.value = res.data.rows;
       info.value = res.data.info;
       tables.value = res.data.tables;
+      columns.value.forEach(col => {
+        if (col.relationTable) {
+          loadRelationColumns(col);
+        }
+      });
     });
     /** 查询字典下拉列表 */
     getDictOptionselect().then(response => {

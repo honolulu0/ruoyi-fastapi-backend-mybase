@@ -478,3 +478,12 @@ class GenTableColumnService:
             GenTableColumnModel(**gen_table_column)
             for gen_table_column in CamelCaseUtil.transform_result(gen_table_column_list_result)
         ]
+
+    @classmethod
+    async def get_db_table_columns_by_name_services(cls, query_db: AsyncSession, table_name: str):
+        """根据表名获取数据库字段信息service"""
+        db_columns = await GenTableColumnDao.get_gen_db_table_columns_by_name(query_db, table_name)
+        return [
+            GenTableColumnModel(**column)
+            for column in CamelCaseUtil.transform_result(db_columns)
+        ]

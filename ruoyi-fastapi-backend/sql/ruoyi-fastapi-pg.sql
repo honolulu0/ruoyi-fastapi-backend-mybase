@@ -926,6 +926,8 @@ create table gen_table_column (
     query_type varchar(200) default 'EQ',
     html_type varchar(200),
     dict_type varchar(200) default '',
+    relation_table varchar(200) default '',
+    relation_column varchar(200) default '',
     sort int4,
     create_by varchar(64) default '',
     create_time timestamp(0),
@@ -951,6 +953,8 @@ comment on column gen_table_column.is_query is '是否查询字段（1是）';
 comment on column gen_table_column.query_type is '查询方式（等于、不等于、大于、小于、范围）';
 comment on column gen_table_column.html_type is '显示类型（文本框、文本域、下拉框、复选框、单选框、日期控件）';
 comment on column gen_table_column.dict_type is '字典类型';
+comment on column gen_table_column.relation_table is '关联表名';
+comment on column gen_table_column.relation_column is '关联列名';
 comment on column gen_table_column.sort is '排序';
 comment on column gen_table_column.create_by is '创建者';
 comment on column gen_table_column.create_time is '创建时间';

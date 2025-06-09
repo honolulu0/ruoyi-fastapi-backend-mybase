@@ -17,6 +17,14 @@ export function listDbTable(query) {
   })
 }
 
+// 查询指定表的字段列表
+export function listDbTableColumns(tableName) {
+  return request({
+    url: '/tool/gen/columns/' + tableName,
+    method: 'get'
+  })
+}
+
 // 查询表详细信息
 export function getGenTable(tableId) {
   return request({

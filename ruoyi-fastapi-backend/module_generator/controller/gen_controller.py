@@ -156,3 +156,11 @@ async def sync_db(request: Request, table_name: str, query_db: AsyncSession = De
     logger.info(sync_db_result.message)
 
     return ResponseUtil.success(data=sync_db_result.message)
+
+
+@genController.get('/columns/{table_name}', dependencies=[Depends(CheckUserInterfaceAuth('tool:gen:list'))])
+async def get_db_table_columns(request: Request, table_name: str, query_db: AsyncSession = Depends(get_db)):
+    columns = await GenTableColumnService.get_db_table_columns_by_name_services(query_db, table_name)
+    logger.info('获取关联表字段成功')
+
+    return ResponseUtil.success(rows=columns)

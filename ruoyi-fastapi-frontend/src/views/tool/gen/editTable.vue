@@ -45,6 +45,16 @@
               <el-input v-model="scope.row.pythonField"></el-input>
             </template>
           </el-table-column>
+          <el-table-column label="表名" min-width="8%">
+            <template #default="scope">
+              <el-input v-model="scope.row.tableName" disabled></el-input>
+            </template>
+          </el-table-column>
+          <el-table-column label="别名" min-width="10%">
+            <template #default="scope">
+              <el-input v-model="scope.row.columnAlias"></el-input>
+            </template>
+          </el-table-column>
 
           <el-table-column label="插入" min-width="5%">
             <template #default="scope">
@@ -191,6 +201,7 @@ function appendRelationFields(tableName, fields) {
       ...col,
       columnId: `rel_${Date.now()}_${Math.random()}`,
       tableName,
+      columnAlias: `${tableName}_${col.columnName}`,
       relationTable: '',
       relationColumn: '',
       relationType: ''
@@ -262,6 +273,9 @@ function close() {
       tables.value = res.data.tables;
       columns.value.forEach(col => {
         col.tableName = info.value.tableName;
+        if (!col.columnAlias && col.columnName) {
+          col.columnAlias = `${col.tableName}_${col.columnName}`;
+        }
         if (col.relationTable) {
           loadRelationColumns(col);
         }

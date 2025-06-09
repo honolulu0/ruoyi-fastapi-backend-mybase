@@ -473,17 +473,27 @@ class GenTableColumnService:
         :return: 业务表字段列表信息对象
         """
         gen_table_column_list_result = await GenTableColumnDao.get_gen_table_column_list_by_table_id(query_db, table_id)
-
-        return [
+        columns = [
             GenTableColumnModel(**gen_table_column)
             for gen_table_column in CamelCaseUtil.transform_result(gen_table_column_list_result)
         ]
+        table = await GenTableDao.get_gen_table_by_id(query_db, table_id)
+        for col in columns:
+            if not col.table_name:
+                col.table_name = table.table_name
+            if not col.column_alias and col.table_name and col.column_name:
+                col.column_alias = f"{col.table_name}_{col.column_name}"
+        return columns
 
     @classmethod
     async def get_db_table_columns_by_name_services(cls, query_db: AsyncSession, table_name: str):
         """根据表名获取数据库字段信息service"""
         db_columns = await GenTableColumnDao.get_gen_db_table_columns_by_name(query_db, table_name)
-        return [
+        result = [
             GenTableColumnModel(**column)
             for column in CamelCaseUtil.transform_result(db_columns)
         ]
+        for column in result:
+            column.table_name = table_name
+            column.column_alias = f"{table_name}_{column.column_name}"
+        return result

@@ -60,4 +60,10 @@ async def init_create_table():
         await add_column_if_not_exists(
             "gen_table_column", "relation_type", "varchar(50) default ''"
         )
+        await add_column_if_not_exists(
+            "gen_table_column", "table_name", "varchar(200) default ''"
+        )
+        await add_column_if_not_exists(
+            "gen_table_column", "column_alias", "varchar(200) default ''"
+        )
     logger.info('数据库连接成功')

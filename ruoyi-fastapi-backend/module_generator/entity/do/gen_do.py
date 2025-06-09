@@ -65,6 +65,8 @@ class GenTableColumn(Base):
         String(200), nullable=True, comment='显示类型（文本框、文本域、下拉框、复选框、单选框、日期控件）'
     )
     dict_type = Column(String(200), nullable=True, default='', comment='字典类型')
+    table_name = Column(String(200), nullable=True, default='', comment='表名')
+    column_alias = Column(String(200), nullable=True, default='', comment='别名')
     relation_table = Column(String(200), nullable=True, default='', comment='关联表名')
     relation_column = Column(String(200), nullable=True, default='', comment='关联列名')
     relation_type = Column(String(50), nullable=True, default='', comment='关联关系')

@@ -182,6 +182,8 @@ class GenTableColumnBaseModel(BaseModel):
         default=None, description='显示类型（文本框、文本域、下拉框、复选框、单选框、日期控件）'
     )
     dict_type: Optional[str] = Field(default=None, description='字典类型')
+    table_name: Optional[str] = Field(default=None, description='表名')
+    column_alias: Optional[str] = Field(default=None, description='别名')
     relation_table: Optional[str] = Field(default=None, description='关联表名')
     relation_column: Optional[str] = Field(default=None, description='关联列名')
     relation_type: Optional[str] = Field(default=None, description='关联关系')

@@ -704,6 +704,8 @@ create table gen_table_column (
   query_type        varchar(200)    default 'EQ'               comment '查询方式（等于、不等于、大于、小于、范围）',
   html_type         varchar(200)                               comment '显示类型（文本框、文本域、下拉框、复选框、单选框、日期控件）',
   dict_type         varchar(200)    default ''                 comment '字典类型',
+  table_name        varchar(200)    default ''                 comment '表名',
+  column_alias      varchar(200)    default ''                 comment '别名',
   relation_table    varchar(200)    default ''                 comment '关联表名',
   relation_column   varchar(200)    default ''                 comment '关联列名',
   relation_type     varchar(50)     default ''                 comment '关联关系',

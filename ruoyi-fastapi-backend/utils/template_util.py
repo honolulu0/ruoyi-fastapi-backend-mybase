@@ -9,6 +9,7 @@ from exceptions.exception import ServiceWarning
 from module_generator.entity.vo.gen_vo import GenTableModel, GenTableColumnModel
 from utils.common_util import CamelCaseUtil, SnakeCaseUtil
 from utils.string_util import StringUtil
+from utils.gen_util import GenUtils
 
 
 class TemplateInitializer:
@@ -36,6 +37,7 @@ class TemplateInitializer:
                     'camel_to_snake': SnakeCaseUtil.camel_to_snake,
                     'snake_to_camel': CamelCaseUtil.snake_to_camel,
                     'get_sqlalchemy_type': TemplateUtils.get_sqlalchemy_type,
+                    'table_to_class': GenUtils.convert_class_name,
                 }
             )
             return env
@@ -92,6 +94,14 @@ class TemplateUtils:
             'dicts': cls.get_dicts(gen_table),
             'dbType': DataBaseConfig.db_type,
         }
+
+        relation_map = {}
+        for col in gen_table.columns or []:
+            if col.relation_table:
+                relation_map[col.relation_table] = GenUtils.convert_class_name(col.relation_table)
+        context['relationTables'] = [
+            {'table': k, 'class': v} for k, v in relation_map.items()
+        ]
 
         # 设置菜单、树形结构、子表的上下文
         cls.set_menu_context(context, gen_table)

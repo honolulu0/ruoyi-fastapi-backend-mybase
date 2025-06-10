@@ -7,7 +7,7 @@
 from datetime import datetime, time
 {% endif %}
 {% endfor %}
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, select, update{% if relationTables %}, text{% endif %}
 from sqlalchemy.ext.asyncio import AsyncSession
 {% if table.sub %}
 from sqlalchemy.orm import selectinload
@@ -20,6 +20,9 @@ from {{ packageName }}.entity.do.{{ businessName }}_do import {{ ClassName }}
 from {{ packageName }}.entity.vo.{{ businessName }}_vo import {{ BusinessName }}Model, {{ BusinessName }}PageQueryModel
 {% endif %}
 from utils.page_util import PageUtil
+{% for rel in relationTables %}
+from {{ packageName }}.entity.do.{{ rel.table | camel_to_snake }}_do import {{ rel.class }}
+{% endfor %}
 
 
 class {{ BusinessName }}Dao:
@@ -93,13 +96,21 @@ class {{ BusinessName }}Dao:
         :param is_page: 是否开启分页
         :return: {{ functionName }}列表信息对象
         """
+        {% set relCols = columns | selectattr('relation_table') | list %}
         query = (
             {% if table.sub %}
-            select({{ ClassName }})
+            select({{ ClassName }}{% for c in relCols %}, {{ c.relation_table | table_to_class }}{% endfor %})
             .options(selectinload({{ ClassName }}.{{ subclassName }}_list))
             {% else %}
-            select({{ ClassName }})
+            select({{ ClassName }}{% for c in relCols %}, {{ c.relation_table | table_to_class }}{% endfor %})
             {% endif %}
+            {% for c in relCols %}
+            .join(
+                {{ c.relation_table | table_to_class }},
+                {{ ClassName }}.{{ c.column_name }} == {{ c.relation_table | table_to_class }}.{{ c.relation_column }},
+                isouter={{ 'False' if c.relation_type == 'INNER' else 'True' }}
+            )
+            {% endfor %}
             .where(
                 {% for column in columns %}
                 {% set field = column.python_field | camel_to_snake %}

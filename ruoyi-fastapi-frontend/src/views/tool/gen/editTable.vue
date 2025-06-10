@@ -131,7 +131,7 @@
           </el-table-column>
           <el-table-column label="关联表" min-width="10%">
             <template #default="scope">
-              <el-select v-model="scope.row.relationTable" @change="val => loadRelationColumns(scope.row, true)">
+              <el-select v-model="scope.row.relationTable" clearable @change="val => loadRelationColumns(scope.row, true)">
                 <el-option
                   v-for="(table, index) in tables"
                   :key="index"
@@ -189,6 +189,13 @@ const activeName = ref("columnInfo");
 const tableHeight = ref(document.documentElement.scrollHeight - 245 + "px");
 const tables = ref([]);
 const columns = ref([]);
+
+function resortColumns() {
+  columns.value.sort((a, b) => (a.sort || 0) - (b.sort || 0));
+  columns.value.forEach((c, idx) => {
+    c.sort = idx + 1;
+  });
+}
 const dictOptions = ref([]);
 const info = ref({});
 
@@ -221,14 +228,14 @@ function appendRelationFields(tableName, fields) {
       relationType: ''
     });
   });
-  columns.value.sort((a, b) => (a.sort || 0) - (b.sort || 0));
+  resortColumns();
 }
 
 function removeRelationFields(tableName) {
   columns.value = columns.value.filter(
     c => !(c.columnSource === 'relation' && c.tableName === tableName)
   );
-  columns.value.sort((a, b) => (a.sort || 0) - (b.sort || 0));
+  resortColumns();
 }
 
 function loadRelationColumns(row, changed = false) {
@@ -304,6 +311,7 @@ function close() {
       columns.value = res.data.rows;
       info.value = res.data.info;
       tables.value = res.data.tables;
+      resortColumns();
       columns.value.forEach(col => {
         if (!col.columnAlias && col.columnName) {
           col.columnAlias = `${getTableAbbr(col.tableName)}_${col.columnName}`;
@@ -317,10 +325,11 @@ function close() {
           col.isIncrement = '0';
         }
         if (col.relationTable) {
+          col.lastRelationTable = col.relationTable;
           loadRelationColumns(col);
         }
       });
-      columns.value.sort((a, b) => (a.sort || 0) - (b.sort || 0));
+      resortColumns();
     });
     /** 查询字典下拉列表 */
     getDictOptionselect().then(response => {

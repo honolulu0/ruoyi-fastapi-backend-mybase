@@ -129,6 +129,8 @@ class GenTableService:
                     gen_table_column.update_by = page_object.update_by
                     gen_table_column.update_time = datetime.now()
                     if gen_table_column.column_id is None:
+                        if gen_table_column.table_id is None:
+                            gen_table_column.table_id = page_object.table_id
                         gen_table_column.create_by = page_object.update_by
                         gen_table_column.create_time = datetime.now()
                         await GenTableColumnDao.add_gen_table_column_dao(
@@ -419,6 +421,11 @@ class GenTableService:
                 gen_table.pk_column = column
                 break
         if gen_table.pk_column is None:
+            for column in gen_table.columns:
+                if column.table_name == gen_table.table_name:
+                    gen_table.pk_column = column
+                    break
+        if gen_table.pk_column is None and gen_table.columns:
             gen_table.pk_column = gen_table.columns[0]
         if gen_table.tpl_category == GenConstant.TPL_SUB:
             for column in gen_table.sub_table.columns:

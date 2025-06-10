@@ -208,6 +208,7 @@ function appendRelationFields(tableName, fields) {
     columns.value.push({
       ...col,
       columnId: `rel_${Date.now()}_${Math.random()}`,
+      tableId: info.value.tableId,
       tableName,
       columnAlias: `${getTableAbbr(tableName)}_${col.columnName}`,
       isPk: '0',

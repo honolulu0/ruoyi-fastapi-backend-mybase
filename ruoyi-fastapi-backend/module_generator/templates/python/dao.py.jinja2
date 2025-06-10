@@ -249,6 +249,67 @@ class {{ BusinessName }}Dao:
         :param {{ businessName }}: 需要更新的{{ functionName }}字典
         :return:
         """
+        {% set sub_rel_tables = relationTables %}
+        {% for rel in sub_rel_tables %}
+        {% set rel_cols = subTable.columns | selectattr('table_name', 'equalto', rel.table) | list %}
+        {% set join_col = (rel_cols | selectattr('relation_table', 'equalto', subTable.table_name) | list | first) %}
+        {% if rel_cols and join_col %}
+        rel_sub_data_{{ loop.index }} = {
+            {% for c in rel_cols %}
+            '{{ c.python_field | camel_to_snake }}': {{ subTable.business_name }}.{{ c.python_field | camel_to_snake }}{% if not loop.last %}, {% endif %}
+            {% endfor %}
+        }
+        if rel_sub_data_{{ loop.index }}.get('{{ join_col.python_field | camel_to_snake }}') is None:
+            rel_sub_data_{{ loop.index }}['{{ join_col.python_field | camel_to_snake }}'] = db_{{ subTable.business_name }}.{{ subTable.pk_column.python_field | camel_to_snake }}
+        await db.execute(insert({{ rel.class }}), [rel_sub_data_{{ loop.index }}])
+        {% endif %}
+        {% endfor %}
+
+        {% for rel in relationTables %}
+        {% set rel_cols = subTable.columns | selectattr('table_name', 'equalto', rel.table) | list %}
+        {% set join_col = (rel_cols | selectattr('relation_table', 'equalto', subTable.table_name) | list | first) %}
+        {% if rel_cols and join_col %}
+        await db.execute(
+            update({{ rel.class }})
+            .where({{ rel.class }}.{{ join_col.column_name }} == {{ subTable.business_name }}['{{ join_col.python_field | camel_to_snake }}'])
+            .values({
+                {% for c in rel_cols %}
+                '{{ c.column_name }}': {{ subTable.business_name }}['{{ c.python_field | camel_to_snake }}']{% if not loop.last %}, {% endif %}
+                {% endfor %}
+            })
+        )
+        {% endif %}
+        {% endfor %}
+
+
+        {% set sub_rel_cols = subTable.columns | selectattr('relation_table') | list %}
+        {% if sub_rel_cols %}
+        record = (
+            await db.execute(
+                select({{ subClassName }}{% for c in sub_rel_cols %}, {{ c.relation_table | table_to_class }}{% endfor %})
+                {% for c in sub_rel_cols %}
+                .join(
+                    {{ c.relation_table | table_to_class }},
+                    {{ c.table_name | table_to_class }}.{{ c.column_name }} == {{ c.relation_table | table_to_class }}.{{ c.relation_column }},
+                    isouter={{ 'False' if c.relation_type == 'INNER' else 'True' }}
+                )
+                {% endfor %}
+                .where({{ subClassName }}.{{ subTable.pk_column.python_field | camel_to_snake }} == {{ subTable.business_name }}.{{ subTable.pk_column.python_field | camel_to_snake }})
+            )
+        ).scalars().first()
+        {% else %}
+        record = None
+        {% endif %}
+        {% for rel in relationTables %}
+        {% set rel_cols = subTable.columns | selectattr('table_name', 'equalto', rel.table) | list %}
+        {% set join_col = (rel_cols | selectattr('relation_table', 'equalto', subTable.table_name) | list | first) %}
+        {% if rel_cols and join_col %}
+        await db.execute(delete({{ rel.class }}).where({{ rel.class }}.{{ join_col.column_name }}.in_([{{ subTable.business_name }}.{{ join_col.python_field | camel_to_snake }}])))
+        {% endif %}
+        {% endfor %}
+        {% if sub_rel_cols %}
+        return record
+        {% endif %}
         await db.execute(update({{ ClassName }}), [{{ businessName }}])
 
         {% for rel in relationTables %}

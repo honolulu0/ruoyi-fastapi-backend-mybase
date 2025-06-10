@@ -211,6 +211,7 @@ function appendRelationFields(tableName, fields) {
       tableId: info.value.tableId,
       tableName,
       columnAlias: `${getTableAbbr(tableName)}_${col.columnName}`,
+      columnSource: 'relation',
       isPk: '0',
       isIncrement: '0',
       relationTable: '',
@@ -291,7 +292,11 @@ function close() {
         if (!col.columnAlias && col.columnName) {
           col.columnAlias = `${getTableAbbr(col.tableName)}_${col.columnName}`;
         }
-        if (col.tableName !== info.value.tableName) {
+        if (!col.columnSource) {
+          col.columnSource =
+            col.tableName === info.value.tableName ? 'main' : 'relation';
+        }
+        if (col.columnSource === 'relation') {
           col.isPk = '0';
           col.isIncrement = '0';
         }

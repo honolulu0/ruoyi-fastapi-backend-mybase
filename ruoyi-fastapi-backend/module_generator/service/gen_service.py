@@ -103,6 +103,7 @@ class GenTableService:
                         column.column_alias = (
                             f"{GenUtils.get_abbreviation(table_name)}_{column.column_name}"
                         )
+                        column.column_source = 'main'
                         await GenTableColumnDao.add_gen_table_column_dao(query_db, column)
             await query_db.commit()
             return CrudResponseModel(is_success=True, message='导入成功')
@@ -133,6 +134,12 @@ class GenTableService:
                             gen_table_column.table_id = page_object.table_id
                         gen_table_column.create_by = page_object.update_by
                         gen_table_column.create_time = datetime.now()
+                        if not gen_table_column.column_source:
+                            gen_table_column.column_source = (
+                                'main'
+                                if gen_table_column.table_name == page_object.table_name
+                                else 'relation'
+                            )
                         await GenTableColumnDao.add_gen_table_column_dao(
                             query_db, gen_table_column
                         )
@@ -425,22 +432,22 @@ class GenTableService:
         :return:
         """
         for column in gen_table.columns:
-            if column.pk:
+            if column.pk and column.column_source != 'relation':
                 gen_table.pk_column = column
                 break
         if gen_table.pk_column is None:
             for column in gen_table.columns:
-                if column.table_name == gen_table.table_name:
+                if column.column_source != 'relation':
                     gen_table.pk_column = column
                     break
         if gen_table.pk_column is None and gen_table.columns:
             gen_table.pk_column = gen_table.columns[0]
         if gen_table.tpl_category == GenConstant.TPL_SUB:
             for column in gen_table.sub_table.columns:
-                if column.pk:
+                if column.pk and column.column_source != 'relation':
                     gen_table.sub_table.pk_column = column
                     break
-            if gen_table.sub_table.columns is None:
+            if gen_table.sub_table.pk_column is None and gen_table.sub_table.columns:
                 gen_table.sub_table.pk_column = gen_table.sub_table.columns[0]
 
     @classmethod
@@ -511,7 +518,11 @@ class GenTableColumnService:
                 col.column_alias = (
                     f"{GenUtils.get_abbreviation(col.table_name)}_{col.column_name}"
                 )
-            if col.table_name != table.table_name:
+            if not col.column_source:
+                col.column_source = (
+                    'main' if col.table_name == table.table_name else 'relation'
+                )
+            if col.column_source == 'relation':
                 col.is_pk = '0'
                 col.pk = False
                 col.is_increment = '0'
@@ -533,5 +544,6 @@ class GenTableColumnService:
             col.pk = False
             col.is_increment = '0'
             col.increment = False
+            col.column_source = 'relation'
             result.append(col)
         return result

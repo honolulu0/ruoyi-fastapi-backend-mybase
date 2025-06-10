@@ -39,15 +39,23 @@ class {{ BusinessName }}Dao:
         :param {{ pk_field }}: {{ pk_field_comment }}
         :return: {{ functionName }}信息对象
         """
+        {% set relCols = columns | selectattr('relation_table') | list %}
         {{ businessName }}_info = (
             (
                 await db.execute(
                     {% if table.sub %}
-                    select({{ ClassName }})
+                    select({{ ClassName }}{% for c in relCols %}, {{ c.relation_table | table_to_class }}{% endfor %})
                     .options(selectinload({{ ClassName }}.{{ subclassName }}_list))
                     {% else %}
-                    select({{ ClassName }})
+                    select({{ ClassName }}{% for c in relCols %}, {{ c.relation_table | table_to_class }}{% endfor %})
                     {% endif %}
+                    {% for c in relCols %}
+                    .join(
+                        {{ c.relation_table | table_to_class }},
+                        {{ c.table_name | table_to_class }}.{{ c.column_name }} == {{ c.relation_table | table_to_class }}.{{ c.relation_column }},
+                        isouter={{ 'False' if c.relation_type == 'INNER' else 'True' }}
+                    )
+                    {% endfor %}
                     .where(
                         {{ ClassName }}.{{ pk_field }} == {{ pk_field }}
                     )
@@ -68,13 +76,22 @@ class {{ BusinessName }}Dao:
         :param {{ businessName }}: {{ functionName }}参数对象
         :return: {{ functionName }}信息对象
         """
+        {% set relCols = columns | selectattr('relation_table') | list %}
         {{ businessName }}_info = (
             (
                 await db.execute(
-                    select({{ ClassName }}).where(
+                    select({{ ClassName }}{% for c in relCols %}, {{ c.relation_table | table_to_class }}{% endfor %})
+                    {% for c in relCols %}
+                    .join(
+                        {{ c.relation_table | table_to_class }},
+                        {{ c.table_name | table_to_class }}.{{ c.column_name }} == {{ c.relation_table | table_to_class }}.{{ c.relation_column }},
+                        isouter={{ 'False' if c.relation_type == 'INNER' else 'True' }}
+                    )
+                    {% endfor %}
+                    .where(
                         {% for column in columns %}
                         {% if column.required %}
-                        {{ ClassName }}.{{ column.python_field | camel_to_snake }} == {{ businessName }}.{{ column.python_field | camel_to_snake }} if {{ businessName }}.{{ column.python_field | camel_to_snake }} else True,
+                        {{ (column.table_name | table_to_class if column.table_name else ClassName) }}.{{ column.python_field | camel_to_snake }} == {{ businessName }}.{{ column.python_field | camel_to_snake }} if {{ businessName }}.{{ column.python_field | camel_to_snake }} else True,
                         {% endif %}
                         {% endfor %}
                     )

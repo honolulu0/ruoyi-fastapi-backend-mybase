@@ -194,6 +194,45 @@ class {{ BusinessName }}Dao:
         {% endif %}
         {% endfor %}
 
+        {% for rel in relationTables %}
+        {% set rel_cols = columns | selectattr('table_name', 'equalto', rel.table) | list %}
+        {% set join_col = (rel_cols | selectattr('relation_table', 'equalto', table.table_name) | list | first) %}
+        {% if rel_cols and join_col %}
+        await db.execute(
+            update({{ rel.class }})
+            .where({{ rel.class }}.{{ join_col.column_name }} == {{ businessName }}['{{ join_col.python_field | camel_to_snake }}'])
+            .values({
+                {% for c in rel_cols %}
+                '{{ c.column_name }}': {{ businessName }}['{{ c.python_field | camel_to_snake }}']{% if not loop.last %}, {% endif %}
+                {% endfor %}
+            })
+        )
+        {% endif %}
+        {% endfor %}
+
+        {% for rel in relationTables %}
+        {% set rel_cols = columns | selectattr('table_name', 'equalto', rel.table) | list %}
+        {% set join_col = (rel_cols | selectattr('relation_table', 'equalto', table.table_name) | list | first) %}
+        {% if rel_cols and join_col %}
+        await db.execute(delete({{ rel.class }}).where({{ rel.class }}.{{ join_col.column_name }}.in_([{{ businessName }}.{{ pk_field }}])))
+        {% endif %}
+        {% endfor %}
+        {% set relTables = relationTables %}
+        {% for rel in relTables %}
+        {% set rel_cols = columns | selectattr('table_name', 'equalto', rel.table) | list %}
+        {% set join_col = (rel_cols | selectattr('relation_table', 'equalto', table.table_name) | list | first) %}
+        {% if rel_cols and join_col %}
+        rel_data_{{ loop.index }} = {
+            {% for c in rel_cols %}
+            '{{ c.python_field | camel_to_snake }}': {{ businessName }}.{{ c.python_field | camel_to_snake }}{% if not loop.last %}, {% endif %}
+            {% endfor %}
+        }
+        if rel_data_{{ loop.index }}.get('{{ join_col.python_field | camel_to_snake }}') is None:
+            rel_data_{{ loop.index }}['{{ join_col.python_field | camel_to_snake }}'] = db_{{ businessName }}.{{ pk_field }}
+        await db.execute(insert({{ rel.class }}), [rel_data_{{ loop.index }}])
+        {% endif %}
+        {% endfor %}
+
         {% set relCols = columns | selectattr('relation_table') | list %}
         {% if relCols %}
         return await cls.get_{{ businessName }}_detail_by_id(db, db_{{ businessName }}.{{ pk_field }})

@@ -133,6 +133,21 @@ export function parseStrEmpty(str) {
   return str;
 }
 
+// 数字格式化为千分位并保留2位小数
+export function formatNumber(value) {
+  if (value === undefined || value === null || value === '') {
+    return ''
+  }
+  const number = parseFloat(value)
+  if (isNaN(number)) {
+    return value
+  }
+  return number.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
+}
+
 // 数据合并
 export function mergeRecursive(source, target) {
   for (var p in target) {

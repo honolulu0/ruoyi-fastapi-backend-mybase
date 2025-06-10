@@ -178,7 +178,12 @@ class {{ BusinessName }}Dao:
         db.add(db_{{ businessName }})
         await db.flush()
 
+        {% set relCols = columns | selectattr('relation_table') | list %}
+        {% if relCols %}
+        return await cls.get_{{ businessName }}_detail_by_id(db, db_{{ businessName }}.{{ pk_field }})
+        {% else %}
         return db_{{ businessName }}
+        {% endif %}
 
     @classmethod
     async def edit_{{ businessName }}_dao(cls, db: AsyncSession, {{ businessName }}: dict):
@@ -191,6 +196,11 @@ class {{ BusinessName }}Dao:
         """
         await db.execute(update({{ ClassName }}), [{{ businessName }}])
 
+        {% set relCols = columns | selectattr('relation_table') | list %}
+        {% if relCols %}
+        return await cls.get_{{ businessName }}_detail_by_id(db, {{ businessName }}['{{ pk_field }}'])
+        {% endif %}
+
     @classmethod
     async def delete_{{ businessName }}_dao(cls, db: AsyncSession, {{ businessName }}: {{ BusinessName }}Model):
         """
@@ -200,7 +210,16 @@ class {{ BusinessName }}Dao:
         :param {{ businessName }}: {{ functionName }}对象
         :return:
         """
+        {% set relCols = columns | selectattr('relation_table') | list %}
+        {% if relCols %}
+        record = await cls.get_{{ businessName }}_detail_by_id(db, {{ businessName }}.{{ pk_field }})
+        {% else %}
+        record = None
+        {% endif %}
         await db.execute(delete({{ ClassName }}).where({{ ClassName }}.{{ pk_field }}.in_([{{ businessName }}.{{ pk_field }}])))
+        {% if relCols %}
+        return record
+        {% endif %}
 
     {% if table.sub %}
     @classmethod

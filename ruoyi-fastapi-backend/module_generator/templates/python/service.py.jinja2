@@ -80,16 +80,25 @@ class {{ BusinessName }}Service:
         {% endif %}
         {% endfor %}
         try:
+            {% set relCols = columns | selectattr('relation_table') | list %}
             {% if table.sub %}
             add_{{ businessName }} = await {{ BusinessName }}Dao.add_{{ businessName }}_dao(query_db, page_object)
             if add_{{ businessName }}:
                 for sub_table in page_object.{{ subclassName }}_list:
                     await {{ BusinessName }}Dao.add_{{ subTable.business_name }}_dao(query_db, sub_table)
             {% else %}
-            await {{ BusinessName }}Dao.add_{{ businessName }}_dao(query_db, page_object)
+            add_{{ businessName }} = await {{ BusinessName }}Dao.add_{{ businessName }}_dao(query_db, page_object)
             {% endif %}
             await query_db.commit()
+            {% if relCols %}
+            return CrudResponseModel(
+                is_success=True,
+                message='新增成功',
+                result=CamelCaseUtil.transform_result(add_{{ businessName }}) if add_{{ businessName }} else None,
+            )
+            {% else %}
             return CrudResponseModel(is_success=True, message='新增成功')
+            {% endif %}
         except Exception as e:
             await query_db.rollback()
             raise e
@@ -115,7 +124,8 @@ class {{ BusinessName }}Service:
             {% endif %}
             {% endfor %}
             try:
-                await {{ BusinessName }}Dao.edit_{{ businessName }}_dao(query_db, edit_{{ businessName }})
+                {% set relCols = columns | selectattr('relation_table') | list %}
+                update_result = await {{ BusinessName }}Dao.edit_{{ businessName }}_dao(query_db, edit_{{ businessName }})
                 {% if table.sub %}
                 for sub_table in {{ businessName }}_info.{{ subclassName }}_list:
                     await {{ BusinessName }}Dao.delete_{{ subTable.business_name }}_dao(query_db, sub_table)
@@ -123,7 +133,15 @@ class {{ BusinessName }}Service:
                     await {{ BusinessName }}Dao.add_{{ subTable.business_name }}_dao(query_db, sub_table)
                 {% endif %}
                 await query_db.commit()
+                {% if relCols %}
+                return CrudResponseModel(
+                    is_success=True,
+                    message='更新成功',
+                    result=CamelCaseUtil.transform_result(update_result) if update_result else None,
+                )
+                {% else %}
                 return CrudResponseModel(is_success=True, message='更新成功')
+                {% endif %}
             except Exception as e:
                 await query_db.rollback()
                 raise e
@@ -142,15 +160,25 @@ class {{ BusinessName }}Service:
         if page_object.{{ pk_field }}s:
             {{ pk_field }}_list = page_object.{{ pk_field }}s.split(',')
             try:
+                {% set relCols = columns | selectattr('relation_table') | list %}
+                delete_result = []
                 for {{ pk_field }} in {{ pk_field }}_list:
                     {% if table.sub %}
                     {{ businessName }} = await cls.{{ businessName }}_detail_services(query_db, int({{ pk_field }}))
                     for sub_table in {{ businessName }}.{{ subclassName }}_list:
                         await {{ BusinessName }}Dao.delete_{{ subTable.business_name }}_dao(query_db, sub_table)
                     {% endif %}
-                    await {{ BusinessName }}Dao.delete_{{ businessName }}_dao(query_db, {{ BusinessName }}Model({{ pkField }}={{ pk_field }}))
+                    record = await {{ BusinessName }}Dao.delete_{{ businessName }}_dao(query_db, {{ BusinessName }}Model({{ pkField }}={{ pk_field }}))
+                    {% if relCols %}
+                    if record:
+                        delete_result.append(CamelCaseUtil.transform_result(record))
+                    {% endif %}
                 await query_db.commit()
+                {% if relCols %}
+                return CrudResponseModel(is_success=True, message='删除成功', result=delete_result)
+                {% else %}
                 return CrudResponseModel(is_success=True, message='删除成功')
+                {% endif %}
             except Exception as e:
                 await query_db.rollback()
                 raise e

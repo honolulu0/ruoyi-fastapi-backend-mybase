@@ -1,4 +1,5 @@
 {% set ns = namespace(use_numeric=false, use_datetime=false) %}
+{% set has_sub = table.sub and (subTable is defined) %}
 {% for column in columns %}
   {% set sa_type = column.column_type | get_sqlalchemy_type %}
   {% if sa_type == 'Float' %}
@@ -7,7 +8,7 @@
     {% set ns.use_datetime = true %}
   {% endif %}
 {% endfor %}
-{% if table.sub %}
+{% if has_sub %}
   {% for column in subTable.columns %}
     {% set sa_type = column.column_type | get_sqlalchemy_type %}
     {% if sa_type == 'Float' %}
@@ -21,7 +22,7 @@
 {% for do_import in doImportList %}
 {{ do_import }}
 {% endfor %}
-{% if table.sub %}
+{% if has_sub %}
 from sqlalchemy.orm import relationship
 {% endif %}
 from config.database import Base
@@ -44,11 +45,11 @@ class {{ ClassName }}(Base):
     {% endif %}
     {{ column.column_name }} = Column({{ sa_type }}, {% if column.pk %}primary_key=True, {% endif %}{% if column.increment %}autoincrement=True, {% endif %}{% if not column.pk %}{% if sa_type == 'DateTime' %}default=datetime.now(timezone.utc), {% elif sa_type.startswith("Numeric") %}default=0.00, {% elif sa_type == 'Integer' %}default=0, {% elif sa_type in ['Boolean', 'bool'] %}default=False, {% elif sa_type in ['String', 'VARCHAR'] %}default='', {% endif %}{% endif %}{% if column.required or column.pk %}nullable=True{% else %}nullable=False{% endif %}, comment='{{ column.column_comment }}')
 {% endfor %}
-{% if table.sub %}
+{% if has_sub %}
     {{ subclassName }}_list = relationship('{{ subClassName }}', back_populates='{{ businessName }}')
 {% endif %}
 
-{% if table.sub %}
+{% if has_sub %}
 
 class {{ subClassName }}(Base):
     """
@@ -62,7 +63,7 @@ class {{ subClassName }}(Base):
     {% endif %}
     {{ column.column_name }} = Column({{ sa_type }}, {% if column.column_name == subTableFkName %}ForeignKey('{{ tableName }}.{{ subTableFkName }}'), {% endif %}{% if column.pk %}primary_key=True, {% endif %}{% if column.increment %}autoincrement=True, {% endif %}{% if not column.pk %}{% if sa_type == 'DateTime' %}default=datetime.now(timezone.utc), {% elif sa_type.startswith("Numeric") %}default=0.00, {% elif sa_type == 'Integer' %}default=0, {% elif sa_type in ['Boolean', 'bool'] %}default=False, {% elif sa_type in ['String', 'VARCHAR'] %}default='', {% endif %}{% endif %}{% if column.required %}nullable=True{% else %}nullable=False{% endif %}, comment='{{ column.column_comment }}')
 {% endfor %}
-{% if table.sub %}
+{% if has_sub %}
     {{ businessName }} = relationship('{{ ClassName }}', back_populates='{{ subclassName }}_list')
 {% endif %}
 {% endif %}

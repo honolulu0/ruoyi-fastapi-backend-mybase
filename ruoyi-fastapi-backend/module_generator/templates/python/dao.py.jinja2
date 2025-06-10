@@ -2,6 +2,7 @@
 {% set pk_field = pkColumn.python_field | camel_to_snake %}
 {% set pkParentheseIndex = pkColumn.column_comment.find("（") %}
 {% set pk_field_comment = pkColumn.column_comment[:pkParentheseIndex] if pkParentheseIndex != -1 else pkColumn.column_comment %}
+{% set has_sub = table.sub and (subTable is defined) %}
 {% for column in columns %}
 {% if column.query and column.query_type == 'BETWEEN' and column.python_field == "createTime" %}
 from datetime import datetime, time
@@ -9,10 +10,10 @@ from datetime import datetime, time
 {% endfor %}
 from sqlalchemy import delete, select, update{% if relationTables %}, insert, text{% endif %}
 from sqlalchemy.ext.asyncio import AsyncSession
-{% if table.sub %}
+{% if has_sub %}
 from sqlalchemy.orm import selectinload
 {% endif %}
-{% if table.sub %}
+{% if has_sub %}
 from {{ packageName }}.entity.do.{{ businessName }}_do import {{ ClassName }}, {{ subClassName }}
 from {{ packageName }}.entity.vo.{{ businessName }}_vo import {{ BusinessName }}Model, {{ BusinessName }}PageQueryModel, {{ subTable.business_name | capitalize }}Model
 {% else %}
@@ -43,7 +44,7 @@ class {{ BusinessName }}Dao:
         {{ businessName }}_info = (
             (
                 await db.execute(
-                    {% if table.sub %}
+                    {% if has_sub %}
                     select({{ ClassName }}{% for c in relCols %}, {{ c.relation_table | table_to_class }}{% endfor %})
                     .options(selectinload({{ ClassName }}.{{ subclassName }}_list))
                     {% else %}
@@ -115,7 +116,7 @@ class {{ BusinessName }}Dao:
         """
         {% set relCols = columns | selectattr('relation_table') | list %}
         query = (
-            {% if table.sub %}
+            {% if has_sub %}
             select({{ ClassName }}{% for c in relCols %}, {{ c.relation_table | table_to_class }}{% endfor %})
             .options(selectinload({{ ClassName }}.{{ subclassName }}_list))
             {% else %}
@@ -174,7 +175,7 @@ class {{ BusinessName }}Dao:
         :param {{ businessName }}: {{ functionName }}对象
         :return:
         """
-        db_{{ businessName }} = {{ ClassName }}(**{{ businessName }}.model_dump(exclude={% raw %}{{% endraw %}{% if table.sub %}'{{ subclassName }}_list', {% endif %}{% for column in columns %}{% if not column.insert %}'{{ column.python_field | camel_to_snake  }}'{% if not loop.last %}, {% endif %}{% endif %}{% endfor %}{% raw %}}{% endraw %}))
+        db_{{ businessName }} = {{ ClassName }}(**{{ businessName }}.model_dump(exclude={% raw %}{{% endraw %}{% if has_sub %}'{{ subclassName }}_list', {% endif %}{% for column in columns %}{% if not column.insert %}'{{ column.python_field | camel_to_snake  }}'{% if not loop.last %}, {% endif %}{% endif %}{% endfor %}{% raw %}}{% endraw %}))
         db.add(db_{{ businessName }})
         await db.flush()
 
@@ -235,7 +236,7 @@ class {{ BusinessName }}Dao:
 
         {% set relCols = columns | selectattr('relation_table') | list %}
         {% if relCols %}
-        return await cls.get_{{ businessName }}_detail_by_id(db, db_{{ businessName }}.{{ pk_field }})
+    {% if has_sub %}
         {% else %}
         return db_{{ businessName }}
         {% endif %}

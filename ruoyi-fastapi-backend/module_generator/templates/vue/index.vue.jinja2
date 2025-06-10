@@ -1,3 +1,4 @@
+{% set has_sub = table.sub and (subTable is defined) %}
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
@@ -271,7 +272,7 @@
       {% endif %}
       {% endfor %}
 
-      {% if table.sub %}
+      {% if has_sub %}
       <el-divider content-position="center">{{ subTable.functionName }}信息</el-divider>
       <el-row :gutter="10" class="mb8">
         <el-col :span="1.5">
@@ -356,7 +357,7 @@ export default {
       loading: true,
       // 选中数组
       ids: [],
-      {% if table.sub %}
+      {% if has_sub %}
       checked{{ subClassName }}: [],
       {% endif %}
       // 非单个禁用
@@ -369,7 +370,7 @@ export default {
       total: 0,
       // {{ functionName }}表格数据
       {{ businessName }}List: [],
-      {% if table.sub %}
+      {% if has_sub %}
       // {{ subTable.functionName }}表格数据
       {{ subclassName }}List: [],
       {% endif %}
@@ -453,7 +454,7 @@ export default {
         {% endif %}
         {% endfor %}
       };
-      {% if table.sub %}
+      {% if has_sub %}
       this.{{ subclassName }}List = [];
       {% endif %}
       this.resetForm("form");
@@ -497,7 +498,7 @@ export default {
         this.form.{{ column.python_field }} = this.form.{{ column.python_field }}.split(",");
         {% endif %}
         {% endfor %}
-        {% if table.sub %}
+        {% if has_sub %}
         this.{{ subclassName }}List = response.data.{{ subclassName }}List;
         {% endif %}
         this.open = true;
@@ -513,7 +514,7 @@ export default {
           this.form.{{ column.python_field }} = this.form.{{ column.python_field }}.join(",");
           {% endif %}
           {% endfor %}
-          {% if table.sub %}
+          {% if has_sub %}
           this.form.{{ subclassName }}List = this.{{ subclassName }}List;
           {% endif %}
           if (this.form.{{ pkColumn.python_field }} != null) {
@@ -542,7 +543,7 @@ export default {
         this.$modal.msgSuccess("删除成功");
       }).catch(() => {});
     },
-    {% if table.sub %}
+    {% if has_sub %}
     /** {{ subTable.functionName }}序号 */
     row{{ subClassName }}Index({ row, rowIndex }) {
       row.index = rowIndex + 1;

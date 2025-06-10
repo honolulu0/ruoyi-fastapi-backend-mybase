@@ -496,6 +496,11 @@ class GenTableColumnService:
                 col.column_alias = (
                     f"{GenUtils.get_abbreviation(col.table_name)}_{col.column_name}"
                 )
+            if col.table_name != table.table_name:
+                col.is_pk = '0'
+                col.pk = False
+                col.is_increment = '0'
+                col.increment = False
         return columns
 
     @classmethod
@@ -509,5 +514,9 @@ class GenTableColumnService:
             GenUtils.init_column_field(col, dummy_table)
             col.table_name = table_name
             col.column_alias = f"{GenUtils.get_abbreviation(table_name)}_{col.column_name}"
+            col.is_pk = '0'
+            col.pk = False
+            col.is_increment = '0'
+            col.increment = False
             result.append(col)
         return result

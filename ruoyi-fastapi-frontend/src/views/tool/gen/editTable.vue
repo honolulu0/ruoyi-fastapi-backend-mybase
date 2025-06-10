@@ -210,6 +210,8 @@ function appendRelationFields(tableName, fields) {
       columnId: `rel_${Date.now()}_${Math.random()}`,
       tableName,
       columnAlias: `${getTableAbbr(tableName)}_${col.columnName}`,
+      isPk: '0',
+      isIncrement: '0',
       relationTable: '',
       relationColumn: '',
       relationType: ''
@@ -287,6 +289,10 @@ function close() {
         col.tableName = info.value.tableName;
         if (!col.columnAlias && col.columnName) {
           col.columnAlias = `${getTableAbbr(col.tableName)}_${col.columnName}`;
+        }
+        if (col.tableName !== info.value.tableName) {
+          col.isPk = '0';
+          col.isIncrement = '0';
         }
         if (col.relationTable) {
           loadRelationColumns(col);

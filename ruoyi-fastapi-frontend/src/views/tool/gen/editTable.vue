@@ -209,11 +209,8 @@ const dictOptions = ref([]);
 const info = ref({});
 
 function getTableAbbr(name) {
-  return name
-    .split(/[_\s]+/)
-    .filter(Boolean)
-    .map(p => p.charAt(0).toLowerCase())
-    .join('');
+  // 默认别名采用表名+字段名，保持直观
+  return name || '';
 }
 
 function appendRelationFields(tableName, fields) {
@@ -227,7 +224,7 @@ function appendRelationFields(tableName, fields) {
       columnId: `rel_${Date.now()}_${Math.random()}`,
       tableId: info.value.tableId,
       tableName,
-      columnAlias: `${getTableAbbr(tableName)}_${col.columnName}`,
+      columnAlias: `${tableName}_${col.columnName}`,
       sort: ++maxSort,
       columnSource: 'relation',
       isPk: '0',
@@ -335,7 +332,7 @@ function close() {
       resortColumns();
       columns.value.forEach(col => {
         if (!col.columnAlias && col.columnName) {
-          col.columnAlias = `${getTableAbbr(col.tableName)}_${col.columnName}`;
+          col.columnAlias = `${col.tableName}_${col.columnName}`;
         }
         if (!col.columnSource) {
           col.columnSource =

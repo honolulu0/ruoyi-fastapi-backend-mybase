@@ -100,9 +100,7 @@ class GenTableService:
                     ]:
                         GenUtils.init_column_field(column, table)
                         column.table_name = table_name
-                        column.column_alias = (
-                            f"{GenUtils.get_abbreviation(table_name)}_{column.column_name}"
-                        )
+                        column.column_alias = f"{table_name}_{column.column_name}"
                         column.column_source = 'main'
                         await GenTableColumnDao.add_gen_table_column_dao(query_db, column)
             await query_db.commit()
@@ -515,9 +513,7 @@ class GenTableColumnService:
             if not col.table_name:
                 col.table_name = table.table_name
             if not col.column_alias and col.table_name and col.column_name:
-                col.column_alias = (
-                    f"{GenUtils.get_abbreviation(col.table_name)}_{col.column_name}"
-                )
+                col.column_alias = f"{col.table_name}_{col.column_name}"
             if not col.column_source:
                 col.column_source = (
                     'main' if col.table_name == table.table_name else 'relation'
@@ -539,7 +535,7 @@ class GenTableColumnService:
             col = GenTableColumnModel(**column)
             GenUtils.init_column_field(col, dummy_table)
             col.table_name = table_name
-            col.column_alias = f"{GenUtils.get_abbreviation(table_name)}_{col.column_name}"
+            col.column_alias = f"{table_name}_{col.column_name}"
             col.is_pk = '0'
             col.pk = False
             col.is_increment = '0'

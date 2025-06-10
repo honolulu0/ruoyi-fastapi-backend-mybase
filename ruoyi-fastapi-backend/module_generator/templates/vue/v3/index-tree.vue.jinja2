@@ -181,6 +181,7 @@
           :parser="{% raw %}(value) => parseFloat(value.replace(/,/g, '')){% endraw %}"
           controls-position="right"
           style="width: 100%"
+          input-style="text-align: left"
         />
         {% else %}
         <el-input v-model="form.{{ field }}" placeholder="请输入{{ comment }}" />

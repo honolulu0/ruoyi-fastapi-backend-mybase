@@ -169,8 +169,14 @@
     />
 
     <!-- 添加或修改{{ functionName }}对话框 -->
-    <el-dialog :title="title" v-model="open" width="500px" append-to-body>
-      <el-form ref="{{ businessName }}Ref" :model="form" :rules="rules" label-width="80px">
+    <el-dialog :title="title" v-model="open" width="1350px" append-to-body>
+      <el-form
+        ref="{{ businessName }}Ref"
+        :model="form"
+        :rules="rules"
+        label-width="130px"
+      >
+        <el-row :gutter="20">
       {% for column in columns %}
       {% set field = column.python_field %}
       {% if column.insert and not column.pk %}
@@ -179,22 +185,41 @@
       {% set comment = column.column_comment[:parentheseIndex] if parentheseIndex != -1 else column.column_comment %}
       {% set dictType = column.dict_type %}
       {% if column.html_type == "input" %}
+      <el-col :span="6">
       <el-form-item label="{{ comment }}" prop="{{ field }}">
+        {% if column.python_type in ['int', 'float', 'Decimal'] %}
+        <el-input-number
+          v-model="form.{{ field }}"
+          :precision="2"
+          :formatter="formatNumber"
+          :parser="{% raw %}(value) => parseFloat(value.replace(/,/g, '')){% endraw %}"
+          controls-position="right"
+        />
+        {% else %}
         <el-input v-model="form.{{ field }}" placeholder="请输入{{ comment }}" />
+        {% endif %}
       </el-form-item>
+      </el-col>
       {% elif column.html_type == "imageUpload" %}
+      <el-col :span="6">
       <el-form-item label="{{ comment }}" prop="{{ field }}">
         <image-upload v-model="form.{{ field }}"/>
       </el-form-item>
+      </el-col>
       {% elif column.html_type == "fileUpload" %}
+      <el-col :span="6">
       <el-form-item label="{{ comment }}" prop="{{ field }}">
         <file-upload v-model="form.{{ field }}"/>
       </el-form-item>
+      </el-col>
       {% elif column.html_type == "editor" %}
+      <el-col :span="6">
       <el-form-item label="{{ comment }}" prop="{{ field }}">
         <editor v-model="form.{{ field }}" :min-height="192"/>
       </el-form-item>
+      </el-col>
       {% elif column.html_type == "select" and dictType %}
+      <el-col :span="6">
       <el-form-item label="{{ comment }}" prop="{{ field }}">
         <el-select v-model="form.{{ field }}" placeholder="请选择{{ comment }}">
           <el-option
@@ -209,13 +234,17 @@
           ></el-option>
         </el-select>
       </el-form-item>
+      </el-col>
       {% elif column.html_type == "select" and not dictType %}
+      <el-col :span="6">
       <el-form-item label="{{ comment }}" prop="{{ field }}">
         <el-select v-model="form.{{ field }}" placeholder="请选择{{ comment }}">
           <el-option label="请选择字典生成" value="" />
         </el-select>
       </el-form-item>
+      </el-col>
       {% elif column.html_type == "checkbox" and dictType %}
+      <el-col :span="6">
       <el-form-item label="{{ comment }}" prop="{{ field }}">
         <el-checkbox-group v-model="form.{{ field }}">
           <el-checkbox
@@ -226,13 +255,17 @@
           </el-checkbox>
         </el-checkbox-group>
       </el-form-item>
+      </el-col>
       {% elif column.html_type == "checkbox" and not dictType %}
+      <el-col :span="6">
       <el-form-item label="{{ comment }}" prop="{{ field }}">
         <el-checkbox-group v-model="form.{{ field }}">
           <el-checkbox>请选择字典生成</el-checkbox>
         </el-checkbox-group>
       </el-form-item>
+      </el-col>
       {% elif column.html_type == "radio" and dictType %}
+      <el-col :span="6">
       <el-form-item label="{{ comment }}" prop="{{ field }}">
         <el-radio-group v-model="form.{{ field }}">
           <el-radio
@@ -247,13 +280,17 @@
           </el-radio>
         </el-radio-group>
       </el-form-item>
+      </el-col>
       {% elif column.html_type == "radio" and not dictType %}
+      <el-col :span="6">
       <el-form-item label="{{ comment }}" prop="{{ field }}">
         <el-radio-group v-model="form.{{ field }}">
           <el-radio label="请选择字典生成" value="" />
         </el-radio-group>
       </el-form-item>
+      </el-col>
       {% elif column.html_type == "datetime" %}
+      <el-col :span="6">
       <el-form-item label="{{ comment }}" prop="{{ field }}">
         <el-date-picker clearable
           v-model="form.{{ field }}"
@@ -262,14 +299,18 @@
           placeholder="请选择{{ comment }}">
         </el-date-picker>
       </el-form-item>
+      </el-col>
       {% elif column.html_type == "textarea" %}
+      <el-col :span="6">
       <el-form-item label="{{ comment }}" prop="{{ field }}">
         <el-input v-model="form.{{ field }}" type="textarea" placeholder="请输入内容" />
       </el-form-item>
+      </el-col>
       {% endif %}
       {% endif %}
       {% endif %}
       {% endfor %}
+        </el-row>
 
       {% if table.sub %}
       <el-divider content-position="center">{{ subTable.functionName }}信息</el-divider>

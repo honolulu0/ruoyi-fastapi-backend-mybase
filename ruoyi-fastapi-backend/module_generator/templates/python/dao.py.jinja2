@@ -107,7 +107,7 @@ class {{ BusinessName }}Dao:
             {% for c in relCols %}
             .join(
                 {{ c.relation_table | table_to_class }},
-                {{ ClassName }}.{{ c.column_name }} == {{ c.relation_table | table_to_class }}.{{ c.relation_column }},
+                {{ c.table_name | table_to_class }}.{{ c.column_name }} == {{ c.relation_table | table_to_class }}.{{ c.relation_column }},
                 isouter={{ 'False' if c.relation_type == 'INNER' else 'True' }}
             )
             {% endfor %}

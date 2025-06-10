@@ -95,12 +95,18 @@ class TemplateUtils:
             'dbType': DataBaseConfig.db_type,
         }
 
-        relation_map = {}
+        relation_tables: Set[str] = set()
         for col in gen_table.columns or []:
             if col.relation_table:
-                relation_map[col.relation_table] = GenUtils.convert_class_name(col.relation_table)
+                relation_tables.add(col.relation_table)
+            if col.table_name and col.table_name != gen_table.table_name:
+                relation_tables.add(col.table_name)
         context['relationTables'] = [
-            {'table': k, 'class': v} for k, v in relation_map.items()
+            {
+                'table': t,
+                'class': GenUtils.convert_class_name(t),
+            }
+            for t in relation_tables
         ]
 
         # 设置菜单、树形结构、子表的上下文

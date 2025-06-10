@@ -410,8 +410,16 @@ class GenTableService:
 
     @classmethod
     async def set_pk_column(cls, gen_table: GenTableModel):
-        """
-        设置主键列信息
+        """根据字段配置确定主键列
+
+        代码生成在查询、更新等场景都依赖业务表的主键字段。\
+        原设计仅适用于单表，关联表字段加载后可能携带错误的\
+        ``is_pk`` 标记，导致生成器无法正确找到主键。此方法按以下
+        顺序确定主键列：
+
+        1. 明确标记 ``is_pk`` 的字段；
+        2. 退化为与业务表同名的字段（忽略关联表字段）；
+        3. 若仍未找到，则取字段列表的第一个元素。
 
         :param gen_table: 业务表信息
         :return:

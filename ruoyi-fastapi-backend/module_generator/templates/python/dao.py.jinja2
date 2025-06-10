@@ -114,23 +114,24 @@ class {{ BusinessName }}Dao:
             .where(
                 {% for column in columns %}
                 {% set field = column.python_field | camel_to_snake %}
+                {% set tbl = column.table_name | table_to_class if column.table_name else ClassName %}
                 {% if column.query %}
                 {% if column.query_type == "EQ" %}
-                {{ ClassName }}.{{ field }} == query_object.{{ field }} if query_object.{{ field }} else True,
+                {{ tbl }}.{{ field }} == query_object.{{ field }} if query_object.{{ field }} else True,
                 {% elif column.query_type == "NE" %}
-                {{ ClassName }}.{{ field }} != query_object.{{ field }} if query_object.{{ field }} else True,
+                {{ tbl }}.{{ field }} != query_object.{{ field }} if query_object.{{ field }} else True,
                 {% elif column.query_type == "GT" %}
-                {{ ClassName }}.{{ field }} > query_object.{{ field }} if query_object.{{ field }} else True,
+                {{ tbl }}.{{ field }} > query_object.{{ field }} if query_object.{{ field }} else True,
                 {% elif column.query_type == "GTE" %}
-                {{ ClassName }}.{{ field }} >= query_object.{{ field }} if query_object.{{ field }} else True,
+                {{ tbl }}.{{ field }} >= query_object.{{ field }} if query_object.{{ field }} else True,
                 {% elif column.query_type == "LT" %}
-                {{ ClassName }}.{{ field }} < query_object.{{ field }} if query_object.{{ field }} else True,
+                {{ tbl }}.{{ field }} < query_object.{{ field }} if query_object.{{ field }} else True,
                 {% elif column.query_type == "LTE" %}
-                {{ ClassName }}.{{ field }} <= query_object.{{ field }} if query_object.{{ field }} else True,
+                {{ tbl }}.{{ field }} <= query_object.{{ field }} if query_object.{{ field }} else True,
                 {% elif column.query_type == "LIKE" %}
-                {{ ClassName }}.{{ field }}.like(f'%{% raw %}{{% endraw %}query_object.{{ field }}{% raw %}}{% endraw %}%') if query_object.{{ field }} else True,
+                {{ tbl }}.{{ field }}.like(f'%{% raw %}{{% endraw %}query_object.{{ field }}{% raw %}}{% endraw %}%') if query_object.{{ field }} else True,
                 {% elif column.query_type == "BETWEEN" %}
-                {{ ClassName }}.{{ field }}.between(
+                {{ tbl }}.{{ field }}.between(
                     datetime.combine(datetime.strptime(query_object.begin_time, '%Y-%m-%d'), time(00, 00, 00)),
                     datetime.combine(datetime.strptime(query_object.end_time, '%Y-%m-%d'), time(23, 59, 59)),
                 )

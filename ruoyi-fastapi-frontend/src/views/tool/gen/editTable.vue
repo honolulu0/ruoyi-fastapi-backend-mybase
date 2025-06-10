@@ -131,7 +131,7 @@
           </el-table-column>
           <el-table-column label="关联表" min-width="10%">
             <template #default="scope">
-              <el-select v-model="scope.row.relationTable" @change="val => loadRelationColumns(scope.row)">
+              <el-select v-model="scope.row.relationTable" @change="val => loadRelationColumns(scope.row, true)">
                 <el-option
                   v-for="(table, index) in tables"
                   :key="index"
@@ -202,6 +202,7 @@ function getTableAbbr(name) {
 
 function appendRelationFields(tableName, fields) {
   const existKeys = new Set(columns.value.map(c => `${c.tableName || ''}-${c.columnName}`));
+  let maxSort = Math.max(0, ...columns.value.map(c => c.sort || 0));
   fields.forEach(col => {
     const key = `${tableName}-${col.columnName}`;
     if (existKeys.has(key)) return;
@@ -211,6 +212,7 @@ function appendRelationFields(tableName, fields) {
       tableId: info.value.tableId,
       tableName,
       columnAlias: `${getTableAbbr(tableName)}_${col.columnName}`,
+      sort: ++maxSort,
       columnSource: 'relation',
       isPk: '0',
       isIncrement: '0',
@@ -219,15 +221,30 @@ function appendRelationFields(tableName, fields) {
       relationType: ''
     });
   });
+  columns.value.sort((a, b) => (a.sort || 0) - (b.sort || 0));
 }
 
-function loadRelationColumns(row) {
+function removeRelationFields(tableName) {
+  columns.value = columns.value.filter(
+    c => !(c.columnSource === 'relation' && c.tableName === tableName)
+  );
+  columns.value.sort((a, b) => (a.sort || 0) - (b.sort || 0));
+}
+
+function loadRelationColumns(row, changed = false) {
+  const prev = row.lastRelationTable;
   if (!row.relationTable) {
+    if (prev) removeRelationFields(prev);
+    row.lastRelationTable = '';
     row.relationOptions = [];
     row.relationColumn = '';
     return;
   }
-  row.relationColumn = '';
+  if (prev && prev !== row.relationTable) {
+    removeRelationFields(prev);
+  }
+  row.lastRelationTable = row.relationTable;
+  if (changed) row.relationColumn = '';
   listDbTableColumns(row.relationTable).then(res => {
     const fields = res.rows || (res.data && res.data.rows) || [];
     row.relationOptions = fields;
@@ -288,7 +305,6 @@ function close() {
       info.value = res.data.info;
       tables.value = res.data.tables;
       columns.value.forEach(col => {
-        col.tableName = info.value.tableName;
         if (!col.columnAlias && col.columnName) {
           col.columnAlias = `${getTableAbbr(col.tableName)}_${col.columnName}`;
         }
@@ -304,6 +320,7 @@ function close() {
           loadRelationColumns(col);
         }
       });
+      columns.value.sort((a, b) => (a.sort || 0) - (b.sort || 0));
     });
     /** 查询字典下拉列表 */
     getDictOptionselect().then(response => {

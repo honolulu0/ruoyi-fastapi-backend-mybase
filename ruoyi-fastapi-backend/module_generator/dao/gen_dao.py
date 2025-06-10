@@ -280,7 +280,9 @@ class GenTableColumnDao:
         gen_table_column_list = (
             (
                 await db.execute(
-                    select(GenTableColumn).where(GenTableColumn.table_id == table_id).order_by(GenTableColumn.sort)
+                    select(GenTableColumn)
+                    .where(GenTableColumn.table_id == table_id)
+                    .order_by(GenTableColumn.column_id)
                 )
             )
             .scalars()

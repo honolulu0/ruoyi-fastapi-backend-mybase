@@ -191,7 +191,16 @@ const tables = ref([]);
 const columns = ref([]);
 
 function resortColumns() {
-  columns.value.sort((a, b) => (a.sort || 0) - (b.sort || 0));
+  columns.value.sort((a, b) => {
+    const aid = Number(a.columnId);
+    const bid = Number(b.columnId);
+    if (!Number.isNaN(aid) && !Number.isNaN(bid)) {
+      return aid - bid;
+    }
+    if (!Number.isNaN(aid)) return -1;
+    if (!Number.isNaN(bid)) return 1;
+    return (a.sort || 0) - (b.sort || 0);
+  });
   columns.value.forEach((c, idx) => {
     c.sort = idx + 1;
   });
@@ -238,6 +247,17 @@ function removeRelationFields(tableName) {
   resortColumns();
 }
 
+function cleanupRelationFields() {
+  const active = new Set(
+    columns.value
+      .filter(c => c.relationTable)
+      .map(c => c.relationTable)
+  );
+  columns.value = columns.value.filter(
+    c => c.columnSource !== 'relation' || active.has(c.tableName)
+  );
+}
+
 function loadRelationColumns(row, changed = false) {
   const prev = row.lastRelationTable;
   if (!row.relationTable) {
@@ -267,6 +287,7 @@ function submitForm() {
     const validateResult = res.every(item => !!item);
     if (validateResult) {
       const genTable = Object.assign({}, info.value);
+      cleanupRelationFields();
       genTable.columns = columns.value.map(col => {
         const c = { ...col };
         if (!Number.isInteger(c.columnId)) delete c.columnId;

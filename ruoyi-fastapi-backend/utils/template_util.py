@@ -113,7 +113,7 @@ class TemplateUtils:
         cls.set_menu_context(context, gen_table)
         if tpl_category == GenConstant.TPL_TREE:
             cls.set_tree_context(context, gen_table)
-        if tpl_category == GenConstant.TPL_SUB:
+        if tpl_category == GenConstant.TPL_SUB and gen_table.sub_table is not None:
             cls.set_sub_context(context, gen_table)
 
         return context

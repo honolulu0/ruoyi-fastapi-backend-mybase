@@ -99,7 +99,11 @@ class GenTableModel(GenTableBaseModel):
 
     @model_validator(mode='after')
     def check_some_is(self) -> 'GenTableModel':
-        self.sub = True if self.tpl_category and self.tpl_category == GenConstant.TPL_SUB else False
+        self.sub = True if (
+            self.tpl_category
+            and self.tpl_category == GenConstant.TPL_SUB
+            and self.sub_table is not None
+        ) else False
         self.tree = True if self.tpl_category and self.tpl_category == GenConstant.TPL_TREE else False
         self.crud = True if self.tpl_category and self.tpl_category == GenConstant.TPL_CRUD else False
         return self

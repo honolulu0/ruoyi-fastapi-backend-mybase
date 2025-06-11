@@ -94,3 +94,12 @@
 .el-dropdown .el-dropdown-link{
   color: var(--el-color-primary) !important;
 }
+
+// align numeric inputs to the left and adjust padding
+.el-input-number.is-controls-right .el-input__wrapper {
+  padding-left: 11px;
+}
+
+.el-input-number .el-input__inner {
+  text-align: left;
+}

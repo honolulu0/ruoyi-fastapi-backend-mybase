@@ -156,53 +156,61 @@
             <el-table
               v-loading="loading"
               :data="userList"
+              border
+              table-layout="fixed"
+              @header-dragend="handleHeaderDragend"
               @selection-change="handleSelectionChange"
             >
               <el-table-column type="selection" width="50" align="center" />
               <el-table-column
+                v-if="columns[0].visible"
+                :width="columns[0].width"
                 label="用户编号"
                 align="center"
                 key="userId"
                 prop="userId"
-                v-if="columns[0].visible"
               />
               <el-table-column
+                v-if="columns[1].visible"
+                :width="columns[1].width"
                 label="用户名称"
                 align="center"
                 key="userName"
                 prop="userName"
-                v-if="columns[1].visible"
                 :show-overflow-tooltip="true"
               />
               <el-table-column
+                v-if="columns[2].visible"
+                :width="columns[2].width"
                 label="用户昵称"
                 align="center"
                 key="nickName"
                 prop="nickName"
-                v-if="columns[2].visible"
                 :show-overflow-tooltip="true"
               />
               <el-table-column
+                v-if="columns[3].visible"
+                :width="columns[3].width"
                 label="部门"
                 align="center"
                 key="deptName"
                 prop="dept.deptName"
-                v-if="columns[3].visible"
                 :show-overflow-tooltip="true"
               />
               <el-table-column
+                v-if="columns[4].visible"
+                :width="columns[4].width || 120"
                 label="手机号码"
                 align="center"
                 key="phonenumber"
                 prop="phonenumber"
-                v-if="columns[4].visible"
-                width="120"
               />
               <el-table-column
+                v-if="columns[5].visible"
+                :width="columns[5].width"
                 label="状态"
                 align="center"
                 key="status"
-                v-if="columns[5].visible"
               >
                 <template #default="scope">
                   <el-switch
@@ -214,11 +222,11 @@
                 </template>
               </el-table-column>
               <el-table-column
+                v-if="columns[6].visible"
+                :width="columns[6].width || 160"
                 label="创建时间"
                 align="center"
                 prop="createTime"
-                v-if="columns[6].visible"
-                width="160"
               >
                 <template #default="scope">
                   <span>{{ parseTime(scope.row.createTime) }}</span>
@@ -500,6 +508,7 @@
 <script setup name="User">
 import { getToken } from "@/utils/auth";
 import useAppStore from "@/store/modules/app";
+import { getTableSetting, setTableSetting } from '@/utils/ruoyi'
 import {
   changeUserStatus,
   listUser,
@@ -514,6 +523,8 @@ import { Splitpanes, Pane } from "splitpanes";
 import "splitpanes/dist/splitpanes.css";
 
 const router = useRouter();
+const route = useRoute();
+const settingKey = route.path;
 const appStore = useAppStore();
 const { proxy } = getCurrentInstance();
 const { sys_normal_disable, sys_user_sex } = proxy.useDict(
@@ -554,14 +565,39 @@ const upload = reactive({
 });
 // 列显隐信息
 const columns = ref([
-  { key: 0, label: `用户编号`, visible: true },
-  { key: 1, label: `用户名称`, visible: true },
-  { key: 2, label: `用户昵称`, visible: true },
-  { key: 3, label: `部门`, visible: true },
-  { key: 4, label: `手机号码`, visible: true },
-  { key: 5, label: `状态`, visible: true },
-  { key: 6, label: `创建时间`, visible: true },
+  { key: 0, label: `用户编号`, prop: 'userId', visible: true, width: undefined },
+  { key: 1, label: `用户名称`, prop: 'userName', visible: true, width: undefined },
+  { key: 2, label: `用户昵称`, prop: 'nickName', visible: true, width: undefined },
+  { key: 3, label: `部门`, prop: 'dept.deptName', visible: true, width: undefined },
+  { key: 4, label: `手机号码`, prop: 'phonenumber', visible: true, width: undefined },
+  { key: 5, label: `状态`, prop: 'status', visible: true, width: undefined },
+  { key: 6, label: `创建时间`, prop: 'createTime', visible: true, width: undefined },
 ]);
+
+onMounted(() => {
+  getTableSetting(settingKey).then(saved => {
+    if (saved && saved.length) {
+      columns.value.forEach(col => {
+        const s = saved.find(item => item.prop === col.prop)
+        if (s) {
+          col.visible = s.visible !== false ? s.visible : col.visible
+          if (s.width) col.width = s.width
+        }
+      })
+    }
+  })
+})
+
+watch(columns, val => {
+  setTableSetting(settingKey, val)
+}, { deep: true })
+
+function handleHeaderDragend(newWidth, oldWidth, column) {
+  const c = columns.value.find(item => item.prop === column.property)
+  if (c) {
+    c.width = newWidth
+  }
+}
 
 const data = reactive({
   form: {},

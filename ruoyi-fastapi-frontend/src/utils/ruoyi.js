@@ -1,4 +1,5 @@
 import cache from '@/plugins/cache'
+import { getTableSettingApi, saveTableSettingApi } from '@/api/system/tableSetting'
 
 /**
  * 通用js方法封装处理
@@ -260,10 +261,11 @@ export function blobValidate(data) {
 }
 
 // 表格个性化设置
-export function getTableSetting(key) {
-  return cache.local.getJSON(`table-setting-${key}`) || []
+export async function getTableSetting(key) {
+  const res = await getTableSettingApi(key)
+  return res.data || []
 }
 
 export function setTableSetting(key, setting) {
-  cache.local.setJSON(`table-setting-${key}`, setting)
+  return saveTableSettingApi(key, setting)
 }

@@ -958,6 +958,23 @@ comment on column gen_table_column.update_by is '更新者';
 comment on column gen_table_column.update_time is '更新时间';
 comment on table gen_table_column is '代码生成业务表字段';
 
+-- ----------------------------
+-- 20、表格个性化设置
+-- ----------------------------
+drop table if exists sys_table_setting;
+create table sys_table_setting (
+    setting_id bigserial not null,
+    user_id bigint,
+    page varchar(255),
+    setting text,
+    create_by varchar(64) default '',
+    create_time timestamp(0),
+    update_by varchar(64) default '',
+    update_time timestamp(0),
+    primary key (setting_id)
+);
+comment on table sys_table_setting is '表格个性化设置';
+
 CREATE OR REPLACE FUNCTION "find_in_set"(int8, varchar)
     RETURNS "pg_catalog"."bool" AS $BODY$
 DECLARE

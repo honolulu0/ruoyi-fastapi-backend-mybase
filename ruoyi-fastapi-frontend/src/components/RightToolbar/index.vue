@@ -15,7 +15,7 @@
             <el-dropdown-menu>
               <template v-for="item in columns" :key="item.key">
                 <el-dropdown-item>
-                  <el-checkbox :checked="item.visible" @change="checkboxChange($event, item.label)" :label="item.label" />
+                  <el-checkbox :checked="item.visible" @change="checkboxChange($event, item)" :label="item.label" />
                 </el-dropdown-item>
               </template>
             </el-dropdown-menu>
@@ -112,8 +112,8 @@ if (props.showColumnsType == 'transfer') {
 }
 
 // 勾选
-function checkboxChange(event, label) {
-  props.columns.filter(item => item.label == label)[0].visible = event;
+function checkboxChange(event, column) {
+  column.visible = event;
 }
 
 </script>

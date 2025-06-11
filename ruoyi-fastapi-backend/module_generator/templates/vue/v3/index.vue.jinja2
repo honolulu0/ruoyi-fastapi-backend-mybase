@@ -440,16 +440,17 @@ const columns = ref([
 ])
 
 onMounted(() => {
-  const saved = getTableSetting(settingKey)
-  if (saved && saved.length) {
-    columns.value.forEach(col => {
-      const s = saved.find(item => item.prop === col.prop)
-      if (s) {
-        col.visible = s.visible !== false ? s.visible : col.visible
-        if (s.width) col.width = s.width
-      }
-    })
-  }
+  getTableSetting(settingKey).then(saved => {
+    if (saved && saved.length) {
+      columns.value.forEach(col => {
+        const s = saved.find(item => item.prop === col.prop)
+        if (s) {
+          col.visible = s.visible !== false ? s.visible : col.visible
+          if (s.width) col.width = s.width
+        }
+      })
+    }
+  })
 })
 
 watch(columns, (val) => {

@@ -80,7 +80,7 @@
           @click="toggleExpandAll"
         >展开/折叠</el-button>
       </el-col>
-      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" :columns="columns"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" :columns="columnsArr"></right-toolbar>
     </el-row>
 
     <el-table
@@ -94,28 +94,25 @@
       :default-expand-all="isExpandAll"
       :tree-props="{children: 'children', hasChildren: 'hasChildren'}"
     >
-      {% set col_index = 0 %}
       {% for column in columns %}
       {% set pythonField = column.python_field %}
       {% set parentheseIndex = column.column_comment.find("（") %}
       {% set comment = column.column_comment[:parentheseIndex] if parentheseIndex != -1 else column.column_comment %}
       {% if column.pk %}
       {% elif column.list and column.html_type == "datetime" %}
-      <el-table-column v-if="columns[{{ col_index }}].visible" :width="columns[{{ col_index }}].width || 180" label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true">
+      <el-table-column v-if="columns.{{ pythonField }}.visible" :width="columns.{{ pythonField }}.width || 180" label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true">
         <template #default="scope">
           <span>{% raw %}{{{% endraw %} parseTime(scope.row.{{ pythonField }}, '{y}-{m}-{d}') {% raw %}}}{% endraw %}</span>
         </template>
       </el-table-column>
-      {% set col_index = col_index + 1 %}
       {% elif column.list and column.html_type == "imageUpload" %}
-      <el-table-column v-if="columns[{{ col_index }}].visible" :width="columns[{{ col_index }}].width || 100" label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true">
+      <el-table-column v-if="columns.{{ pythonField }}.visible" :width="columns.{{ pythonField }}.width || 100" label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true">
         <template #default="scope">
           <image-preview :src="scope.row.{{ pythonField }}" :width="50" :height="50"/>
         </template>
       </el-table-column>
-      {% set col_index = col_index + 1 %}
       {% elif column.list and column.dict_type %}
-      <el-table-column v-if="columns[{{ col_index }}].visible" :width="columns[{{ col_index }}].width" label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true">
+      <el-table-column v-if="columns.{{ pythonField }}.visible" :width="columns.{{ pythonField }}.width" label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true">
         <template #default="scope">
           {% if column.html_type == "checkbox" %}
             <dict-tag :options="{{ column.dict_type }}" :value="scope.row.{{ pythonField }} ? scope.row.{{ pythonField }}.split(',') : []"/>
@@ -124,18 +121,15 @@
           {% endif %}
         </template>
       </el-table-column>
-      {% set col_index = col_index + 1 %}
       {% elif column.list and pythonField %}
       {% if column.python_type in ['int', 'float', 'Decimal'] %}
-      <el-table-column v-if="columns[{{ col_index }}].visible" :width="columns[{{ col_index }}].width" label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true">
+      <el-table-column v-if="columns.{{ pythonField }}.visible" :width="columns.{{ pythonField }}.width" label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true">
         <template #default="scope">
           <span>{% raw %}{{{% endraw %} formatNumber(scope.row.{{ pythonField }}) {% raw %}}}{% endraw %}</span>
         </template>
       </el-table-column>
-      {% set col_index = col_index + 1 %}
       {% else %}
-      <el-table-column v-if="columns[{{ col_index }}].visible" :width="columns[{{ col_index }}].width" label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true" />
-      {% set col_index = col_index + 1 %}
+      <el-table-column v-if="columns.{{ pythonField }}.visible" :width="columns.{{ pythonField }}.width" label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true" />
       {% endif %}
       {% endif %}
       {% endfor %}
@@ -338,26 +332,27 @@ const isExpandAll = ref(true);
 const refreshTable = ref(true);
 const route = useRoute()
 const settingKey = route.path
-const columns = ref([
+const columns = reactive({
 {% set index = 0 %}
 {% for column in columns %}
 {% if column.list and not column.pk %}
 {% set parentheseIndex = column.column_comment.find("（") %}
 {% set comment = column.column_comment[:parentheseIndex] if parentheseIndex != -1 else column.column_comment %}
-  { key: {{ index }}, label: `{{ comment }}`, prop: '{{ column.python_field }}', visible: true, width: undefined },
+  '{{ column.python_field }}': { key: {{ index }}, label: `{{ comment }}`, prop: '{{ column.python_field }}', visible: true, width: undefined },
 {% set index = index + 1 %}
 {% endif %}
 {% endfor %}
-])
+})
+const columnsArr = computed(() => Object.values(columns))
 
 onMounted(() => {
   getTableSetting(settingKey).then(saved => {
-    if (saved && saved.length) {
-      columns.value.forEach(col => {
-        const s = saved.find(item => item.prop === col.prop)
+    if (saved) {
+      Object.keys(columns).forEach(prop => {
+        const s = saved[prop]
         if (s) {
-          if (typeof s.visible === 'boolean') col.visible = s.visible
-          if (s.width) col.width = s.width
+          if (typeof s.visible === 'boolean') columns[prop].visible = s.visible
+          if (s.width) columns[prop].width = s.width
         }
       })
     }
@@ -367,17 +362,17 @@ onMounted(() => {
 let saveTimer
 watch(
   columns,
-  (val) => {
+  () => {
     clearTimeout(saveTimer)
     saveTimer = setTimeout(() => {
-      setTableSetting(settingKey, val)
+      setTableSetting(settingKey, columns)
     }, 300)
   },
   { deep: true }
 )
 
 function handleHeaderDragend(newWidth, oldWidth, column) {
-  const c = columns.value.find(item => item.prop === column.property)
+  const c = columns[column.property]
   if (c) {
     c.width = newWidth
   }

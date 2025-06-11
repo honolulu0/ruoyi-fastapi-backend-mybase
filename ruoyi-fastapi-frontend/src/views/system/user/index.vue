@@ -149,7 +149,7 @@
               <right-toolbar
                 v-model:showSearch="showSearch"
                 @queryTable="getList"
-                :columns="columns"
+                :columns="columnsArr"
               ></right-toolbar>
             </el-row>
 
@@ -163,16 +163,16 @@
             >
               <el-table-column type="selection" width="50" align="center" />
               <el-table-column
-                v-if="columns[0].visible"
-                :width="columns[0].width"
+                v-if="columns.userId.visible"
+                :width="columns.userId.width"
                 label="用户编号"
                 align="center"
                 key="userId"
                 prop="userId"
               />
               <el-table-column
-                v-if="columns[1].visible"
-                :width="columns[1].width"
+                v-if="columns.userName.visible"
+                :width="columns.userName.width"
                 label="用户名称"
                 align="center"
                 key="userName"
@@ -180,8 +180,8 @@
                 :show-overflow-tooltip="true"
               />
               <el-table-column
-                v-if="columns[2].visible"
-                :width="columns[2].width"
+                v-if="columns.nickName.visible"
+                :width="columns.nickName.width"
                 label="用户昵称"
                 align="center"
                 key="nickName"
@@ -189,8 +189,8 @@
                 :show-overflow-tooltip="true"
               />
               <el-table-column
-                v-if="columns[3].visible"
-                :width="columns[3].width"
+                v-if="columns['dept.deptName'].visible"
+                :width="columns['dept.deptName'].width"
                 label="部门"
                 align="center"
                 key="deptName"
@@ -198,16 +198,16 @@
                 :show-overflow-tooltip="true"
               />
               <el-table-column
-                v-if="columns[4].visible"
-                :width="columns[4].width || 120"
+                v-if="columns.phonenumber.visible"
+                :width="columns.phonenumber.width || 120"
                 label="手机号码"
                 align="center"
                 key="phonenumber"
                 prop="phonenumber"
               />
               <el-table-column
-                v-if="columns[5].visible"
-                :width="columns[5].width"
+                v-if="columns.status.visible"
+                :width="columns.status.width"
                 label="状态"
                 align="center"
                 key="status"
@@ -222,8 +222,8 @@
                 </template>
               </el-table-column>
               <el-table-column
-                v-if="columns[6].visible"
-                :width="columns[6].width || 160"
+                v-if="columns.createTime.visible"
+                :width="columns.createTime.width || 160"
                 label="创建时间"
                 align="center"
                 prop="createTime"
@@ -564,36 +564,37 @@ const upload = reactive({
   url: import.meta.env.VITE_APP_BASE_API + "/system/user/importData",
 });
 // 列显隐信息
-const columns = ref([
-  { key: 0, label: `用户编号`, prop: 'userId', visible: true, width: undefined },
-  { key: 1, label: `用户名称`, prop: 'userName', visible: true, width: undefined },
-  { key: 2, label: `用户昵称`, prop: 'nickName', visible: true, width: undefined },
-  { key: 3, label: `部门`, prop: 'dept.deptName', visible: true, width: undefined },
-  { key: 4, label: `手机号码`, prop: 'phonenumber', visible: true, width: undefined },
-  { key: 5, label: `状态`, prop: 'status', visible: true, width: undefined },
-  { key: 6, label: `创建时间`, prop: 'createTime', visible: true, width: undefined },
-]);
+const columns = reactive({
+  userId: { key: 0, label: `用户编号`, prop: 'userId', visible: true, width: undefined },
+  userName: { key: 1, label: `用户名称`, prop: 'userName', visible: true, width: undefined },
+  nickName: { key: 2, label: `用户昵称`, prop: 'nickName', visible: true, width: undefined },
+  'dept.deptName': { key: 3, label: `部门`, prop: 'dept.deptName', visible: true, width: undefined },
+  phonenumber: { key: 4, label: `手机号码`, prop: 'phonenumber', visible: true, width: undefined },
+  status: { key: 5, label: `状态`, prop: 'status', visible: true, width: undefined },
+  createTime: { key: 6, label: `创建时间`, prop: 'createTime', visible: true, width: undefined },
+})
+const columnsArr = computed(() => Object.values(columns))
 
 onMounted(() => {
   getTableSetting(settingKey).then(saved => {
-    if (saved && saved.length) {
-      columns.value.forEach(col => {
-        const s = saved.find(item => item.prop === col.prop)
+    if (saved) {
+      Object.keys(columns).forEach(prop => {
+        const s = saved[prop]
         if (s) {
-          col.visible = s.visible !== false ? s.visible : col.visible
-          if (s.width) col.width = s.width
+          columns[prop].visible = s.visible !== false ? s.visible : columns[prop].visible
+          if (s.width) columns[prop].width = s.width
         }
       })
     }
   })
 })
 
-watch(columns, val => {
-  setTableSetting(settingKey, val)
+watch(columns, () => {
+  setTableSetting(settingKey, columns)
 }, { deep: true })
 
 function handleHeaderDragend(newWidth, oldWidth, column) {
-  const c = columns.value.find(item => item.prop === column.property)
+  const c = columns[column.property]
   if (c) {
     c.width = newWidth
   }

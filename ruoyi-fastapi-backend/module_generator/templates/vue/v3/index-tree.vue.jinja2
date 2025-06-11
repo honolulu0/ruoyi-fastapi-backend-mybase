@@ -186,6 +186,7 @@
           :precision="2"
           :formatter="formatNumber"
           :parser="{% raw %}(value) => parseFloat(value.replace(/,/g, '')){% endraw %}"
+          :input-style="{ textAlign: 'left' }"
           controls-position="right"
           style="width: 100%"
         />

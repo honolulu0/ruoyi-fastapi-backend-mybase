@@ -101,7 +101,7 @@
           v-hasPermi="['{{ moduleName }}:{{ businessName }}:export']"
         >导出</el-button>
       </el-col>
-      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" :columns="columns"></right-toolbar>
     </el-row>
 
     <el-table
@@ -109,29 +109,34 @@
       :data="{{ businessName }}List"
       border
       table-layout="fixed"
+      @header-dragend="handleHeaderDragend"
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" align="center" />
+      {% set col_index = 0 %}
       {% for column in columns %}
       {% set pythonField = column.python_field %}
       {% set parentheseIndex = column.column_comment.find("（") %}
       {% set comment = column.column_comment[:parentheseIndex] if parentheseIndex != -1 else column.column_comment %}
       {% if column.pk %}
-      <el-table-column label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true" />
+      <el-table-column v-if="columns[{{ col_index }}].visible" :width="columns[{{ col_index }}].width" label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true" />
+      {% set col_index = col_index + 1 %}
       {% elif column.list and column.html_type == "datetime" %}
-      <el-table-column label="{{ comment }}" align="center" prop="{{ pythonField }}" width="180" :show-overflow-tooltip="true">
+      <el-table-column v-if="columns[{{ col_index }}].visible" :width="columns[{{ col_index }}].width || 180" label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true">
         <template #default="scope">
           <span>{% raw %}{{{% endraw %} parseTime(scope.row.{{ pythonField }}, '{y}-{m}-{d}') {% raw %}}}{% endraw %}</span>
         </template>
       </el-table-column>
+      {% set col_index = col_index + 1 %}
       {% elif column.list and column.html_type == "imageUpload" %}
-      <el-table-column label="{{ comment }}" align="center" prop="{{ pythonField }}" width="100" :show-overflow-tooltip="true">
+      <el-table-column v-if="columns[{{ col_index }}].visible" :width="columns[{{ col_index }}].width || 100" label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true">
         <template #default="scope">
           <image-preview :src="scope.row.{{ pythonField }}" :width="50" :height="50"/>
         </template>
       </el-table-column>
+      {% set col_index = col_index + 1 %}
       {% elif column.list and column.dict_type %}
-      <el-table-column label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true">
+      <el-table-column v-if="columns[{{ col_index }}].visible" :width="columns[{{ col_index }}].width" label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true">
         <template #default="scope">
           {% if column.html_type == "checkbox" %}
             <dict-tag :options="{{ column.dict_type }}" :value="scope.row.{{ pythonField }} ? scope.row.{{ pythonField }}.split(',') : []"/>
@@ -140,15 +145,18 @@
           {% endif %}
         </template>
       </el-table-column>
+      {% set col_index = col_index + 1 %}
       {% elif column.list and pythonField %}
       {% if column.python_type in ['int', 'float', 'Decimal'] %}
-      <el-table-column label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true">
+      <el-table-column v-if="columns[{{ col_index }}].visible" :width="columns[{{ col_index }}].width" label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true">
         <template #default="scope">
           <span>{% raw %}{{{% endraw %} formatNumber(scope.row.{{ pythonField }}) {% raw %}}}{% endraw %}</span>
         </template>
       </el-table-column>
+      {% set col_index = col_index + 1 %}
       {% else %}
-      <el-table-column label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true" />
+      <el-table-column v-if="columns[{{ col_index }}].visible" :width="columns[{{ col_index }}].width" label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true" />
+      {% set col_index = col_index + 1 %}
       {% endif %}
       {% endif %}
       {% endfor %}
@@ -393,6 +401,8 @@
 
 <script setup name="{{ BusinessName }}">
 import { list{{ BusinessName }}, get{{ BusinessName }}, del{{ BusinessName }}, add{{ BusinessName }}, update{{ BusinessName }} } from "@/api/{{ moduleName }}/{{ businessName }}";
+import { useRoute } from 'vue-router'
+import { getTableSetting, setTableSetting } from '@/utils/ruoyi'
 
 const { proxy } = getCurrentInstance();
 {% if dicts %}
@@ -415,6 +425,43 @@ const single = ref(true);
 const multiple = ref(true);
 const total = ref(0);
 const title = ref("");
+const route = useRoute()
+const settingKey = route.path
+const columns = ref([
+{% set index = 0 %}
+{% for column in columns %}
+{% if column.list or column.pk %}
+{% set parentheseIndex = column.column_comment.find("（") %}
+{% set comment = column.column_comment[:parentheseIndex] if parentheseIndex != -1 else column.column_comment %}
+  { key: {{ index }}, label: `{{ comment }}`, prop: '{{ column.python_field }}', visible: true, width: undefined },
+{% set index = index + 1 %}
+{% endif %}
+{% endfor %}
+])
+
+onMounted(() => {
+  const saved = getTableSetting(settingKey)
+  if (saved && saved.length) {
+    columns.value.forEach(col => {
+      const s = saved.find(item => item.prop === col.prop)
+      if (s) {
+        col.visible = s.visible !== false ? s.visible : col.visible
+        if (s.width) col.width = s.width
+      }
+    })
+  }
+})
+
+watch(columns, (val) => {
+  setTableSetting(settingKey, val)
+}, { deep: true })
+
+function handleHeaderDragend(newWidth, oldWidth, column) {
+  const c = columns.value.find(item => item.prop === column.property)
+  if (c) {
+    c.width = newWidth
+  }
+}
 {% for column in columns %}
 {% if column.html_type == "datetime" and column.query_type == "BETWEEN" %}
 {% set AttrName = column.python_field[0] | upper + column.python_field[1:] %}

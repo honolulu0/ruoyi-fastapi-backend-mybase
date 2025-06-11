@@ -1,4 +1,4 @@
-
+import cache from '@/plugins/cache'
 
 /**
  * 通用js方法封装处理
@@ -257,4 +257,13 @@ export function getNormalPath(p) {
 // 验证是否为blob格式
 export function blobValidate(data) {
   return data.type !== 'application/json'
+}
+
+// 表格个性化设置
+export function getTableSetting(key) {
+  return cache.local.getJSON(`table-setting-${key}`) || []
+}
+
+export function setTableSetting(key, setting) {
+  cache.local.setJSON(`table-setting-${key}`, setting)
 }

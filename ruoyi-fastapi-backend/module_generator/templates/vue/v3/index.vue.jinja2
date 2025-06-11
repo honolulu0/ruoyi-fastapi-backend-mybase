@@ -446,7 +446,7 @@ onMounted(() => {
       columns.value.forEach(col => {
         const s = saved.find(item => item.prop === col.prop)
         if (s) {
-          col.visible = s.visible !== false ? s.visible : col.visible
+          if (typeof s.visible === 'boolean') col.visible = s.visible
           if (s.width) col.width = s.width
         }
       })

@@ -10,7 +10,7 @@ from utils.response_util import ResponseUtil
 tableSettingController = APIRouter(prefix='/system/table-setting', dependencies=[Depends(LoginService.get_current_user)])
 
 
-@tableSettingController.get('/{page}')
+@tableSettingController.get('/{page:path}')
 async def get_table_setting(
     request: Request,
     page: str,

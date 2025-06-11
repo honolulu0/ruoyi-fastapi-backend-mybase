@@ -454,9 +454,17 @@ onMounted(() => {
   })
 })
 
-watch(columns, (val) => {
-  setTableSetting(settingKey, val)
-}, { deep: true })
+let saveTimer
+watch(
+  columns,
+  (val) => {
+    clearTimeout(saveTimer)
+    saveTimer = setTimeout(() => {
+      setTableSetting(settingKey, val)
+    }, 300)
+  },
+  { deep: true }
+)
 
 function handleHeaderDragend(newWidth, oldWidth, column) {
   const c = columns.value.find(item => item.prop === column.property)

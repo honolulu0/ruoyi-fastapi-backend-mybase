@@ -84,6 +84,7 @@
     </el-row>
 
     <el-table
+      ref="tableRef"
       v-if="refreshTable"
       v-loading="loading"
       :data="{{ businessName }}List"
@@ -94,35 +95,33 @@
       :default-expand-all="isExpandAll"
       :tree-props="{children: 'children', hasChildren: 'hasChildren'}"
     >
-      <draggable v-model="columnsArr" item-key="prop" tag="template" @end="updateColumnOrder">
-        <template #item="{ element }">
-          <el-table-column
-            v-if="element.visible"
-            :width="element.width || (element.htmlType === 'datetime' ? 180 : element.htmlType === 'imageUpload' ? 100 : undefined)"
-            :label="element.label"
-            align="center"
-            :prop="element.prop"
-            :show-overflow-tooltip="true"
-          >
-            <template v-if="element.htmlType === 'datetime'" #default="scope">
-              <span>{% raw %}{{{% endraw %} parseTime(scope.row[element.prop], '{y}-{m}-{d}') {% raw %}}}{% endraw %}</span>
-            </template>
-            <template v-else-if="element.htmlType === 'imageUpload'" #default="scope">
-              <image-preview :src="scope.row[element.prop]" :width="50" :height="50"/>
-            </template>
-            <template v-else-if="element.dictType" #default="scope">
-              <dict-tag
-                v-if="element.htmlType === 'checkbox'"
-                :options="element.dictType"
-                :value="scope.row[element.prop] ? scope.row[element.prop].split(',') : []"/>
-              <dict-tag v-else :options="element.dictType" :value="scope.row[element.prop]"/>
-            </template>
-            <template v-else-if="['int','float','Decimal'].includes(element.pythonType)" #default="scope">
-              <span>{% raw %}{{{% endraw %} formatNumber(scope.row[element.prop]) {% raw %}}}{% endraw %}</span>
-            </template>
-          </el-table-column>
-        </template>
-      </draggable>
+      <template v-for="element in columnsArr" :key="element.prop">
+        <el-table-column
+          v-if="element.visible"
+          :width="element.width || (element.htmlType === 'datetime' ? 180 : element.htmlType === 'imageUpload' ? 100 : undefined)"
+          :label="element.label"
+          align="center"
+          :prop="element.prop"
+          :show-overflow-tooltip="true"
+        >
+          <template v-if="element.htmlType === 'datetime'" #default="scope">
+            <span>{% raw %}{{{% endraw %} parseTime(scope.row[element.prop], '{y}-{m}-{d}') {% raw %}}}{% endraw %}</span>
+          </template>
+          <template v-else-if="element.htmlType === 'imageUpload'" #default="scope">
+            <image-preview :src="scope.row[element.prop]" :width="50" :height="50"/>
+          </template>
+          <template v-else-if="element.dictType" #default="scope">
+            <dict-tag
+              v-if="element.htmlType === 'checkbox'"
+              :options="element.dictType"
+              :value="scope.row[element.prop] ? scope.row[element.prop].split(',') : []"/>
+            <dict-tag v-else :options="element.dictType" :value="scope.row[element.prop]"/>
+          </template>
+          <template v-else-if="['int','float','Decimal'].includes(element.pythonType)" #default="scope">
+            <span>{% raw %}{{{% endraw %} formatNumber(scope.row[element.prop]) {% raw %}}}{% endraw %}</span>
+          </template>
+        </el-table-column>
+      </template>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['{{ moduleName }}:{{ businessName }}:edit']">修改</el-button>
@@ -305,7 +304,7 @@
 import { list{{ BusinessName }}, get{{ BusinessName }}, del{{ BusinessName }}, add{{ BusinessName }}, update{{ BusinessName }} } from "@/api/{{ moduleName }}/{{ businessName }}";
 import { useRoute } from 'vue-router'
 import { getTableSetting, setTableSetting } from '@/utils/ruoyi'
-import draggable from "vuedraggable/dist/vuedraggable.common"
+import Sortable from "sortablejs"
 
 const { proxy } = getCurrentInstance();
 {% if dicts %}
@@ -323,6 +322,7 @@ const isExpandAll = ref(true);
 const refreshTable = ref(true);
 const route = useRoute()
 const settingKey = route.path
+const tableRef = ref()
 const columns = reactive({
 {% set index = 0 %}
 {% for column in columns %}
@@ -364,6 +364,7 @@ onMounted(() => {
     } else {
       columnsArr.value = Object.values(columns)
     }
+    initSortable()
   })
 })
 
@@ -389,6 +390,24 @@ function handleHeaderDragend(newWidth, oldWidth, column) {
 function updateColumnOrder() {
   columnsArr.value.forEach((col, index) => {
     columns[col.prop].order = index
+  })
+  nextTick(initSortable)
+}
+
+let sortable
+function initSortable() {
+  const el = tableRef.value?.$el.querySelector('.el-table__header-wrapper tr')
+  if (!el) return
+  if (sortable) sortable.destroy()
+  sortable = Sortable.create(el, {
+    animation: 150,
+    draggable: 'th',
+    onEnd: ({ oldIndex, newIndex }) => {
+      if (oldIndex === newIndex) return
+      const item = columnsArr.value.splice(oldIndex, 1)[0]
+      columnsArr.value.splice(newIndex, 0, item)
+      updateColumnOrder()
+    },
   })
 }
 {% for column in columns %}

@@ -106,6 +106,7 @@
 
     <el-table
       ref="tableRef"
+      v-if="refreshTable"
       v-loading="loading"
       :data="{{ businessName }}List"
       border
@@ -399,6 +400,7 @@ const {{ subclassName }}List = ref([]);
 {% endif %}
 const open = ref(false);
 const loading = ref(true);
+const refreshTable = ref(true);
 const showSearch = ref(true);
 const ids = ref([]);
 {% if table.sub %}
@@ -479,7 +481,11 @@ function updateColumnOrder() {
   columnsArr.value.forEach((col, index) => {
     columns[col.prop].order = index
   })
-  nextTick(initSortable)
+  refreshTable.value = false
+  nextTick(() => {
+    refreshTable.value = true
+    nextTick(initSortable)
+  })
 }
 
 let sortable

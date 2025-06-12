@@ -391,7 +391,11 @@ function updateColumnOrder() {
   columnsArr.value.forEach((col, index) => {
     columns[col.prop].order = index
   })
-  nextTick(initSortable)
+  refreshTable.value = false
+  nextTick(() => {
+    refreshTable.value = true
+    nextTick(initSortable)
+  })
 }
 
 let sortable

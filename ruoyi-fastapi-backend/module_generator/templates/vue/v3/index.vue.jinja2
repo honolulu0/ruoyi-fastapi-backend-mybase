@@ -113,46 +113,35 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" align="center" />
-      {% for column in columns %}
-      {% set pythonField = column.python_field %}
-      {% set parentheseIndex = column.column_comment.find("（") %}
-      {% set comment = column.column_comment[:parentheseIndex] if parentheseIndex != -1 else column.column_comment %}
-      {% if column.pk %}
-      <el-table-column v-if="columns.{{ pythonField }}.visible" :width="columns.{{ pythonField }}.width" label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true" />
-      {% elif column.list and column.html_type == "datetime" %}
-      <el-table-column v-if="columns.{{ pythonField }}.visible" :width="columns.{{ pythonField }}.width || 180" label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true">
-        <template #default="scope">
-          <span>{% raw %}{{{% endraw %} parseTime(scope.row.{{ pythonField }}, '{y}-{m}-{d}') {% raw %}}}{% endraw %}</span>
+      <draggable v-model="columnsArr" item-key="prop" tag="template" @end="updateColumnOrder">
+        <template #item="{ element }">
+          <el-table-column
+            v-if="element.visible"
+            :width="element.width || (element.htmlType === 'datetime' ? 180 : element.htmlType === 'imageUpload' ? 100 : undefined)"
+            :label="element.label"
+            align="center"
+            :prop="element.prop"
+            :show-overflow-tooltip="true"
+          >
+            <template v-if="element.htmlType === 'datetime'" #default="scope">
+              <span>{% raw %}{{{% endraw %} parseTime(scope.row[element.prop], '{y}-{m}-{d}') {% raw %}}}{% endraw %}</span>
+            </template>
+            <template v-else-if="element.htmlType === 'imageUpload'" #default="scope">
+              <image-preview :src="scope.row[element.prop]" :width="50" :height="50"/>
+            </template>
+            <template v-else-if="element.dictType" #default="scope">
+              <dict-tag
+                v-if="element.htmlType === 'checkbox'"
+                :options="element.dictType"
+                :value="scope.row[element.prop] ? scope.row[element.prop].split(',') : []"/>
+              <dict-tag v-else :options="element.dictType" :value="scope.row[element.prop]"/>
+            </template>
+            <template v-else-if="['int','float','Decimal'].includes(element.pythonType)" #default="scope">
+              <span>{% raw %}{{{% endraw %} formatNumber(scope.row[element.prop]) {% raw %}}}{% endraw %}</span>
+            </template>
+          </el-table-column>
         </template>
-      </el-table-column>
-      {% elif column.list and column.html_type == "imageUpload" %}
-      <el-table-column v-if="columns.{{ pythonField }}.visible" :width="columns.{{ pythonField }}.width || 100" label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true">
-        <template #default="scope">
-          <image-preview :src="scope.row.{{ pythonField }}" :width="50" :height="50"/>
-        </template>
-      </el-table-column>
-      {% elif column.list and column.dict_type %}
-      <el-table-column v-if="columns.{{ pythonField }}.visible" :width="columns.{{ pythonField }}.width" label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true">
-        <template #default="scope">
-          {% if column.html_type == "checkbox" %}
-            <dict-tag :options="{{ column.dict_type }}" :value="scope.row.{{ pythonField }} ? scope.row.{{ pythonField }}.split(',') : []"/>
-          {% else %}
-            <dict-tag :options="{{ column.dict_type }}" :value="scope.row.{{ pythonField }}"/>
-          {% endif %}
-        </template>
-      </el-table-column>
-      {% elif column.list and pythonField %}
-      {% if column.python_type in ['int', 'float', 'Decimal'] %}
-      <el-table-column v-if="columns.{{ pythonField }}.visible" :width="columns.{{ pythonField }}.width" label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true">
-        <template #default="scope">
-          <span>{% raw %}{{{% endraw %} formatNumber(scope.row.{{ pythonField }}) {% raw %}}}{% endraw %}</span>
-        </template>
-      </el-table-column>
-      {% else %}
-      <el-table-column v-if="columns.{{ pythonField }}.visible" :width="columns.{{ pythonField }}.width" label="{{ comment }}" align="center" prop="{{ pythonField }}" :show-overflow-tooltip="true" />
-      {% endif %}
-      {% endif %}
-      {% endfor %}
+      </draggable>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['{{ moduleName }}:{{ businessName }}:edit']">修改</el-button>
@@ -397,6 +386,7 @@
 import { list{{ BusinessName }}, get{{ BusinessName }}, del{{ BusinessName }}, add{{ BusinessName }}, update{{ BusinessName }} } from "@/api/{{ moduleName }}/{{ businessName }}";
 import { useRoute } from 'vue-router'
 import { getTableSetting, setTableSetting } from '@/utils/ruoyi'
+import draggable from "vuedraggable/dist/vuedraggable.common"
 
 const { proxy } = getCurrentInstance();
 {% if dicts %}
@@ -427,12 +417,23 @@ const columns = reactive({
 {% if column.list or column.pk %}
 {% set parentheseIndex = column.column_comment.find("（") %}
 {% set comment = column.column_comment[:parentheseIndex] if parentheseIndex != -1 else column.column_comment %}
-  '{{ column.python_field }}': { key: {{ index }}, label: `{{ comment }}`, prop: '{{ column.python_field }}', visible: true, width: undefined },
+  '{{ column.python_field }}': {
+    key: {{ index }},
+    order: {{ index }},
+    label: `{{ comment }}`,
+    prop: '{{ column.python_field }}',
+    visible: true,
+    width: undefined,
+    htmlType: '{{ column.html_type }}',
+    dictType: {{ column.dict_type if column.dict_type else 'null' }},
+    pythonType: '{{ column.python_type }}',
+    pk: {{ 'true' if column.pk else 'false' }}
+  },
 {% set index = index + 1 %}
 {% endif %}
 {% endfor %}
 })
-const columnsArr = computed(() => Object.values(columns))
+const columnsArr = ref(Object.values(columns))
 
 onMounted(() => {
   getTableSetting(settingKey).then(saved => {
@@ -442,8 +443,14 @@ onMounted(() => {
         if (s) {
           if (typeof s.visible === 'boolean') columns[prop].visible = s.visible
           if (s.width) columns[prop].width = s.width
+          if (typeof s.order === 'number') columns[prop].order = s.order
         }
       })
+      columnsArr.value = Object.keys(columns)
+        .sort((a, b) => columns[a].order - columns[b].order)
+        .map(k => columns[k])
+    } else {
+      columnsArr.value = Object.values(columns)
     }
   })
 })
@@ -465,6 +472,12 @@ function handleHeaderDragend(newWidth, oldWidth, column) {
   if (c) {
     c.width = newWidth
   }
+}
+
+function updateColumnOrder() {
+  columnsArr.value.forEach((col, index) => {
+    columns[col.prop].order = index
+  })
 }
 {% for column in columns %}
 {% if column.html_type == "datetime" and column.query_type == "BETWEEN" %}

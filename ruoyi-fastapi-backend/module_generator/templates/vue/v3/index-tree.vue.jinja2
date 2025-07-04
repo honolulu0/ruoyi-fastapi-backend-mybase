@@ -329,6 +329,7 @@ const columns = reactive({
 const columnsArr = computed(() => Object.values(columns).sort((a, b) => a.order - b.order))
 
 const tableRef = ref(null)
+let sortableInstance
 
 onMounted(() => {
   getTableSetting(settingKey).then(saved => {
@@ -348,9 +349,12 @@ onMounted(() => {
 })
 
 function initSortable() {
-  const header = tableRef.value.$el.querySelector('.el-table__header-wrapper tr')
-  if (!header) return
-  Sortable.create(header, {
+  const tableEl = tableRef.value && tableRef.value.$el
+  if (!tableEl) return
+  const header = tableEl.querySelector('.el-table__header-wrapper tr')
+  if (!header || !header.parentNode) return
+  if (sortableInstance) sortableInstance.destroy()
+  sortableInstance = Sortable.create(header, {
     draggable: 'th',
     animation: 150,
     onEnd({ oldIndex, newIndex }) {
@@ -363,6 +367,10 @@ function initSortable() {
     }
   })
 }
+
+onBeforeUnmount(() => {
+  if (sortableInstance) sortableInstance.destroy()
+})
 
 let saveTimer
 watch(
@@ -502,6 +510,7 @@ function toggleExpandAll() {
   isExpandAll.value = !isExpandAll.value;
   nextTick(() => {
     refreshTable.value = true;
+    nextTick(initSortable);
   });
 }
 

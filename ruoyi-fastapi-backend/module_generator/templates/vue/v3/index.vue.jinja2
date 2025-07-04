@@ -129,12 +129,12 @@
           :show-overflow-tooltip="col.htmlType !== 'imageUpload'"
       >
         <template #default="scope">
-          <span v-if="col.htmlType === 'datetime'">{{ parseTime(scope.row[col.prop], '{y}-{m}-{d}') }}</span>
+          <span v-if="col.htmlType === 'datetime'">{% raw %}{{{% endraw %} parseTime(scope.row[col.prop], '{y}-{m}-{d}') {% raw %}}}{% endraw %}</span>
           <image-preview v-else-if="col.htmlType === 'imageUpload'" :src="scope.row[col.prop]" :width="50" :height="50" />
           <dict-tag v-else-if="col.dictType && col.htmlType === 'checkbox'" :options="col.dictType" :value="scope.row[col.prop] ? scope.row[col.prop].split(',') : []" />
           <dict-tag v-else-if="col.dictType" :options="col.dictType" :value="scope.row[col.prop]" />
-          <span v-else-if="['int','float','Decimal'].includes(col.pythonType)">{{ formatNumber(scope.row[col.prop]) }}</span>
-          <span v-else>{{ scope.row[col.prop] }}</span>
+          <span v-else-if="['int','float','Decimal'].includes(col.pythonType)">{% raw %}{{{% endraw %} formatNumber(scope.row[col.prop]) {% raw %}}}{% endraw %}</span>
+          <span v-else>{% raw %}{{{% endraw %} scope.row[col.prop] {% raw %}}}{% endraw %}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="136" class-name="small-padding fixed-width">
@@ -399,7 +399,7 @@
     import Sortable from 'sortablejs'
     {% if dicts %}
         {% set dictsNoSymbol = dicts.replace("'", "") %}
-        const {{{ dictsNoSymbol }}} = proxy.useDict({{ dicts }});
+        const { {{ dictsNoSymbol }} } = proxy.useDict({{ dicts }});
     {% endif %}
 
     const {{ businessName }}List = ref([]);

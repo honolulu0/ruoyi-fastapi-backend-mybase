@@ -506,6 +506,10 @@ function handleAdd(row) {
 
 /** 展开/折叠操作 */
 function toggleExpandAll() {
+  if (sortableInstance) {
+    sortableInstance.destroy();
+    sortableInstance = null;
+  }
   refreshTable.value = false;
   isExpandAll.value = !isExpandAll.value;
   nextTick(() => {

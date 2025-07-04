@@ -118,25 +118,25 @@
         @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" align="center"/>
-      <el-table-column
-          v-for="col in columnsArr"
-          v-if="col.visible"
-          :key="col.prop"
-          :width="col.width || (col.htmlType === 'datetime' ? 180 : col.htmlType === 'imageUpload' ? 100 : undefined)"
-          :label="col.label"
-          align="center"
-          :prop="col.prop"
-          :show-overflow-tooltip="col.htmlType !== 'imageUpload'"
-      >
-        <template #default="scope">
-          <span v-if="col.htmlType === 'datetime'">{% raw %}{{{% endraw %} parseTime(scope.row[col.prop], '{y}-{m}-{d}') {% raw %}}}{% endraw %}</span>
-          <image-preview v-else-if="col.htmlType === 'imageUpload'" :src="scope.row[col.prop]" :width="50" :height="50" />
-          <dict-tag v-else-if="col.dictType && col.htmlType === 'checkbox'" :options="col.dictType" :value="scope.row[col.prop] ? scope.row[col.prop].split(',') : []" />
-          <dict-tag v-else-if="col.dictType" :options="col.dictType" :value="scope.row[col.prop]" />
-          <span v-else-if="['int','float','Decimal'].includes(col.pythonType)">{% raw %}{{{% endraw %} formatNumber(scope.row[col.prop]) {% raw %}}}{% endraw %}</span>
-          <span v-else>{% raw %}{{{% endraw %} scope.row[col.prop] {% raw %}}}{% endraw %}</span>
-        </template>
-      </el-table-column>
+      <template v-for="col in columnsArr" :key="col.prop">
+        <el-table-column
+            v-if="col.visible"
+            :width="col.width || (col.htmlType === 'datetime' ? 180 : col.htmlType === 'imageUpload' ? 100 : undefined)"
+            :label="col.label"
+            align="center"
+            :prop="col.prop"
+            :show-overflow-tooltip="col.htmlType !== 'imageUpload'"
+        >
+          <template #default="scope">
+            <span v-if="col.htmlType === 'datetime'">{% raw %}{{{% endraw %} parseTime(scope.row[col.prop], '{y}-{m}-{d}') {% raw %}}}{% endraw %}</span>
+            <image-preview v-else-if="col.htmlType === 'imageUpload'" :src="scope.row[col.prop]" :width="50" :height="50" />
+            <dict-tag v-else-if="col.dictType && col.htmlType === 'checkbox'" :options="col.dictType" :value="scope.row[col.prop] ? scope.row[col.prop].split(',') : []" />
+            <dict-tag v-else-if="col.dictType" :options="col.dictType" :value="scope.row[col.prop]" />
+            <span v-else-if="['int','float','Decimal'].includes(col.pythonType)">{% raw %}{{{% endraw %} formatNumber(scope.row[col.prop]) {% raw %}}}{% endraw %}</span>
+            <span v-else>{% raw %}{{{% endraw %} scope.row[col.prop] {% raw %}}}{% endraw %}</span>
+          </template>
+        </el-table-column>
+      </template>
       <el-table-column label="操作" align="center" width="136" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
@@ -467,7 +467,7 @@
         if (!tableEl) return
         const header = tableEl.querySelector('.el-table__header-wrapper tr')
         if (!header || !header.parentNode) return
-        if (sortableInstance) sortableInstance.destroy()
+        if (sortableInstance && sortableInstance.el && sortableInstance.el.parentNode) sortableInstance.destroy()
         sortableInstance = Sortable.create(header, {
             draggable: 'th',
             animation: 150,
@@ -484,7 +484,7 @@
     }
 
     onBeforeUnmount(() => {
-        if (sortableInstance) sortableInstance.destroy()
+        if (sortableInstance && sortableInstance.el && sortableInstance.el.parentNode) sortableInstance.destroy()
     })
 
     let saveTimer

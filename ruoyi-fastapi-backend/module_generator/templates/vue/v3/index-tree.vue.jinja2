@@ -95,8 +95,8 @@
       :default-expand-all="isExpandAll"
       :tree-props="{children: 'children', hasChildren: 'hasChildren'}"
     >
+      <template v-for="col in columnsArr" :key="col.prop">
       <el-table-column
-        v-for="col in columnsArr"
         v-if="col.visible"
         :key="col.prop"
         :width="col.width || (col.htmlType === 'datetime' ? 180 : col.htmlType === 'imageUpload' ? 100 : undefined)"
@@ -114,6 +114,7 @@
           <span v-else>{% raw %}{{{% endraw %} scope.row[col.prop] {% raw %}}}{% endraw %}</span>
         </template>
       </el-table-column>
+      </template>
       <el-table-column label="操作" align="center" width="136"  class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['{{ moduleName }}:{{ businessName }}:edit']">修改</el-button>
@@ -353,7 +354,7 @@ function initSortable() {
   if (!tableEl) return
   const header = tableEl.querySelector('.el-table__header-wrapper tr')
   if (!header || !header.parentNode) return
-  if (sortableInstance) sortableInstance.destroy()
+  if (sortableInstance && sortableInstance.el && sortableInstance.el.parentNode) sortableInstance.destroy()
   sortableInstance = Sortable.create(header, {
     draggable: 'th',
     animation: 150,
@@ -369,7 +370,7 @@ function initSortable() {
 }
 
 onBeforeUnmount(() => {
-  if (sortableInstance) sortableInstance.destroy()
+  if (sortableInstance && sortableInstance.el && sortableInstance.el.parentNode) sortableInstance.destroy()
 })
 
 let saveTimer
@@ -506,7 +507,7 @@ function handleAdd(row) {
 
 /** 展开/折叠操作 */
 function toggleExpandAll() {
-  if (sortableInstance) {
+  if (sortableInstance && sortableInstance.el && sortableInstance.el.parentNode) {
     sortableInstance.destroy();
     sortableInstance = null;
   }

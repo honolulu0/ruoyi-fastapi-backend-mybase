@@ -428,7 +428,7 @@
     const {proxy} = getCurrentInstance();
     {% if dicts %}
         {% set dictsNoSymbol = dicts.replace("'", "") %}
-        const {{{ dictsNoSymbol }}} = proxy.useDict({{ dicts }});
+        const { {{ dictsNoSymbol }} } = proxy.useDict({{ dicts }});
     {% endif %}
 
     const {{ businessName }}List = ref([]);

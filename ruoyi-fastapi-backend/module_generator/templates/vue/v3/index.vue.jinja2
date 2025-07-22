@@ -428,7 +428,7 @@
     const {proxy} = getCurrentInstance();
     {% if dicts %}
         {% set dictsNoSymbol = dicts.replace("'", "") %}
-        const {{{ dictsNoSymbol }}} = proxy.useDict({{ dicts }});
+        const { {{ dictsNoSymbol }} } = proxy.useDict({{ dicts }});
     {% endif %}
 
     const {{ businessName }}List = ref([]);
@@ -449,19 +449,18 @@
     const route = useRoute()
     const settingKey = route.path
     const columns = reactive({
-        {% set index = 0 %}
         {% for column in columns %}
             {% if column.list or column.pk %}
                 {% set parentheseIndex = column.column_comment.find("（") %}
                 {% set comment = column.column_comment[:parentheseIndex] if parentheseIndex != -1 else column.column_comment %}
                 '{{ column.python_field }}': {
-                    key: {{ index }},
+                    key: {{ loop.index0 }},
+                    order: {{ loop.index0 }},
                     label: `{{ comment }}`,
                     prop: '{{ column.python_field }}',
                     visible: true,
                     width: undefined
                 },
-                {% set index = index + 1 %}
             {% endif %}
         {% endfor %}
     })

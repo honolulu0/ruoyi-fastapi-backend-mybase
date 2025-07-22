@@ -317,13 +317,11 @@ const refreshTable = ref(true);
 const route = useRoute()
 const settingKey = route.path
 const columns = reactive({
-{% set index = 0 %}
 {% for column in columns %}
 {% if column.list and not column.pk %}
 {% set parentheseIndex = column.column_comment.find("（") %}
 {% set comment = column.column_comment[:parentheseIndex] if parentheseIndex != -1 else column.column_comment %}
-  '{{ column.python_field }}': { key: {{ index }}, label: `{{ comment }}`, prop: '{{ column.python_field }}', visible: true, width: undefined, order: {{ index }}, htmlType: '{{ column.html_type }}', dictType: {{ column.dict_type if column.dict_type else 'null' }}, pythonType: '{{ column.python_type }}' },
-{% set index = index + 1 %}
+  '{{ column.python_field }}': { key: {{ loop.index0 }}, label: `{{ comment }}`, prop: '{{ column.python_field }}', visible: true, width: undefined, order: {{ loop.index0 }}, htmlType: '{{ column.html_type }}', dictType: {{ column.dict_type if column.dict_type else 'null' }}, pythonType: '{{ column.python_type }}' },
 {% endif %}
 {% endfor %}
 })
